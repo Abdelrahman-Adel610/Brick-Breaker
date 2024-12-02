@@ -1,3 +1,5 @@
+;public BRICK_WIDTH,BRICK_HEIGHT,COLOR_MATRIX,CRNT_BRICK,BRICK_ROW,BRICK_COL,END_ROW,END_COL 
+;EXTRN DRAWBRICK:FAR
 .MODEL SMALL
 .STACK 4000
 .DATA
@@ -17,6 +19,19 @@
 
     BALL_COLOR      DB  04H     ;RED COLOR
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                    ;Breaks var
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+BRICK_WIDTH dw  10
+BRICK_HEIGHT dw 10
+COLOR_MATRIX db 5,4,3,2,6,7,8,2,5,6,5,4,3,2,6,7,8,2,5,6
+CRNT_BRICK db 0
+ROW dw 150
+COL dw 160
+ENDCOL dw ?
+ENDROW dw ?
 .CODE
 
 MAIN PROC FAR
@@ -24,7 +39,8 @@ MAIN PROC FAR
                     MOV  AX, @DATA
                     MOV  DS, AX                 ;MOVING DATA TO DATA SEGNMENT
 
-
+                mov ax, 0A000h    ; Video memory segment for mode 13h
+                mov es, ax        ; Set ES to point to video memory 
                     MOV  AH, 00H
                     MOV  AL, 13H                ;CHOOSE THE VIDEO MODE
                     INT  10H
@@ -42,8 +58,8 @@ MAIN PROC FAR
 
 
                     MOV  PREV_TIME, DL
-
                     CALL CLEARING_SCREEN        ;TO CLEAR THE SCREEN
+                    CALL DRAWBRICK
 
                     CALL DRAWING_BALL           ;DRAWING BALL
                     CALL MOVING_BALL
@@ -139,4 +155,55 @@ DRAWING_BALL PROC
 DRAWING_BALL ENDP
 
 
-END MAIN
+DRAWBRICK PROC
+;1-DEFINE STARTING PIXED COORDS STARTING_X//STARTING_Y    ROW[0-(200-BRICK_HEIGHT)]    COL[0-(320-BRICK_WIDTH)]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          mov ax,ROW   ;==>column number
+          mov bx,320 ;bx=320
+          mul bx     ;ax=ax*bx 
+          add ax,COL ;ax==>in now target pixel to draw
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;2.1-DEFINT ENDING CONDITIONS (CALC ENDCOL=START+BRICK_WIDTH)
+          add ax,BRICK_WIDTH
+          mov ENDCOL,ax      ; calc EXIT COL         
+          sub ax,BRICK_WIDTH
+          ;;;;;;;;;;;;;;;;;;;;;;;
+;2.2-DEFINT ENDING CONDITIONS (CALC ENDROW=START+(BRICK_HEIGHT)*320)
+          ;;;;;;;;;;;;;;;;;;;;;;;
+          push ax
+          mov bx,ax
+          mov ax,320
+          mul BRICK_HEIGHT              ; calc EXIT ROW
+          add bx,ax
+          mov ENDROW,bx
+          pop ax                 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;3-GET THE COLOR OF THE CRNT BRICK
+          mov si,ax
+          mov bl,COLOR_MATRIX ;The color of the crnt brick 
+          add bl,CRNT_BRICK   ;The color of the crnt brick 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;4-INITAL CHECK FOR STATRING POSITION IF IT IS VALID
+          cmp si,ENDCOL
+          jge tirm
+          cmp si,ENDROW
+          jge tirm
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ draw:    mov es:[si],bl
+          inc si
+          cmp si,ENDCOL
+          jl draw
+          add ENDCOL,320
+          add si,320
+          sub si, BRICK_WIDTH
+          cmp si,ENDROW
+          jl draw   
+          
+          tirm:  
+          ret
+DRAWBRICK ENDP
+
+
+
+
+end main
