@@ -22,14 +22,16 @@
                     ;Breaks var
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-BRICK_WIDTH dw  280
-BRICK_HEIGHT dw 4
-COLOR_MATRIX db 3,2,3,2,6,7,8,2,5,6,5,4,3,2,6,7,8,2,5,6
-CRNT_BRICK db 0
-ROW dw 70
+BRICK_WIDTH dw 35
+BRICK_HEIGHT dw 8
+COLOR_MATRIX db 1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3
+CRNT_BRICK dW 0
+ROW dw 4
 COL dw 0
-ENDCOL dw ?
-ENDROW dw ?
+BRICKS_PER_ROW EQU 8
+TOTAL_ROWS EQU 3
+STEP_PER_ROW EQU 40 ;(BRICK_WIDTH+1PX SPACE)
+STEP_PER_COL EQU 12 ;(BRICK_WIDTH+1PX SPACE)
 .CODE
 
 MAIN PROC FAR
@@ -57,8 +59,7 @@ MAIN PROC FAR
 
                     MOV  PREV_TIME, DL
                     CALL CLEARING_SCREEN        ;TO CLEAR THE SCREEN
-                    CALL DRAWBRICK
-
+                    CALL DRAW_ALL_BRICKS
                     CALL DRAWING_BALL           ;DRAWING BALL
                     CALL MOVING_BALL
                     CALL HANDLE_COLLISION
@@ -169,7 +170,7 @@ CMP ES:[SI],BYTE PTR 0
 JNZ GOLEFT
 INC SI
 
-DEC COLOR_MATRIX
+;DEC COLOR_MATRIX
 
 ;MOV CX,0
 ;CLEAR:
@@ -217,57 +218,64 @@ DRAWING_BALL PROC
                     SUB  BX, BALL_POSITION_Y    ;GET THE DIFFERENCE
                     CMP  BX, BALL_SIZE
                     JL   DRAW_HORIZONTAL        ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-
-
                     RET                         ;ELSE WILL RETURN
 
 DRAWING_BALL ENDP
 
+DRAW_ALL_BRICKS PROC
+MOV CRNT_BRICK,0
+MOV CX,0
+MOV DX,0
+DRAWIT:
+CALL DRAWBRICK
+ADD COL,STEP_PER_ROW
+INC CRNT_BRICK
+INC CX
+CMP CX,BRICKS_PER_ROW
+JL DRAWIT
+MOV CX,0
+INC DX
+MOV COL,0
+ADD ROW,STEP_PER_COL
+mov CRNT_BRICK,0
+CMP DX,TOTAL_ROWS
+JL DRAWIT
+MOV ROW,4
+MOV COL,0
+RET
+DRAW_ALL_BRICKS ENDP
+
+
 
 DRAWBRICK PROC
-;1-DEFINE STARTING PIXED COORDS STARTING_X//STARTING_Y    ROW[0-(200-BRICK_HEIGHT)]    COL[0-(320-BRICK_WIDTH)]
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-          mov ax,ROW   ;==>column number
+push DX
+push CX
+PUSH AX
+PUSH BX
+          mov ax,ROW  ;==>column number
           mov bx,320 ;bx=320
           mul bx     ;ax=ax*bx 
           add ax,COL ;ax==>in now target pixel to draw
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;2.1-DEFINT ENDING CONDITIONS (CALC ENDCOL=START+BRICK_WIDTH)
-          add ax,BRICK_WIDTH
-          mov ENDCOL,ax      ; calc EXIT COL         
-          sub ax,BRICK_WIDTH
-          ;;;;;;;;;;;;;;;;;;;;;;;
-;2.2-DEFINT ENDING CONDITIONS (CALC ENDROW=START+(BRICK_HEIGHT)*320)
-          ;;;;;;;;;;;;;;;;;;;;;;;
-          push ax
-          mov bx,ax
-          mov ax,320
-          mul BRICK_HEIGHT              ; calc EXIT ROW
-          add bx,ax
-          mov ENDROW,bx
-          pop ax                 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;3-GET THE COLOR OF THE CRNT BRICK
-          mov si,ax
-          mov bl,COLOR_MATRIX ;The color of the crnt brick 
-          add bl,CRNT_BRICK   ;The color of the crnt brick 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;4-INITAL CHECK FOR STATRING POSITION IF IT IS VALID
-          cmp si,ENDCOL
-          jge tirm
-          cmp si,ENDROW
-          jge tirm
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          MOV SI,AX
+          MOV DI,CRNT_BRICK
+          mov bl,[COLOR_MATRIX+DI]
+          mov cx,0
  draw:    mov es:[si],bl
           inc si
-          cmp si,ENDCOL
+          inc CX
+          cmp cx,BRICK_WIDTH
           jl draw
-          add ENDCOL,320
           add si,320
           sub si, BRICK_WIDTH
-          cmp si,ENDROW
+          INC DX
+          MOV CX,0
+          CMP DX,BRICK_HEIGHT
           jl draw            
-          tirm:  
+          tirm:       
+POP BX
+POP AX
+pop CX
+pop DX
           ret
 DRAWBRICK ENDP
 
