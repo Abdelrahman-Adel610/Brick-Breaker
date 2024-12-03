@@ -17,19 +17,19 @@
     BALL_SPEED_Y    DW  5H      ;THE SPEED OF THE BALL IN Y DIRECTION
     BALL_SPEED_X    DW  2H
 
-    BALL_COLOR      DB  04H     ;RED COLOR
+    BALL_COLOR      DB  09H     ;RED COLOR
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                     ;Breaks var
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-BRICK_WIDTH dw  10
-BRICK_HEIGHT dw 10
+BRICK_WIDTH dw  280
+BRICK_HEIGHT dw 4
 COLOR_MATRIX db 5,4,3,2,6,7,8,2,5,6,5,4,3,2,6,7,8,2,5,6
 CRNT_BRICK db 0
-ROW dw 150
-COL dw 160
+ROW dw 70
+COL dw 0
 ENDCOL dw ?
 ENDROW dw ?
 .CODE
@@ -39,8 +39,8 @@ MAIN PROC FAR
                     MOV  AX, @DATA
                     MOV  DS, AX                 ;MOVING DATA TO DATA SEGNMENT
 
-                mov ax, 0A000h    ; Video memory segment for mode 13h
-                mov es, ax        ; Set ES to point to video memory 
+                    mov ax, 0A000h    ; Video memory segment for mode 13h
+                    mov es, ax        ; Set ES to point to video memory 
                     MOV  AH, 00H
                     MOV  AL, 13H                ;CHOOSE THE VIDEO MODE
                     INT  10H
@@ -63,7 +63,7 @@ MAIN PROC FAR
 
                     CALL DRAWING_BALL           ;DRAWING BALL
                     CALL MOVING_BALL
-
+                    CALL HANDLE_COLLISION
                     JMP  TIME_AGAIN
 
 
@@ -112,7 +112,7 @@ MOVING_BALL PROC
                     CMP  BALL_POSITION_X, AX    ;CHECK IF x > MAX WIDTH - BALL SIZE
                     JG   REVERSE_X              ;REVERSE IF GREATER
 
-                    RET
+        RT:            RET
 
     REVERSE_Y:      NEG  BALL_SPEED_Y           ;REVERSE THE DIRECTION OF SPEED IN Y
                     RET
@@ -124,15 +124,50 @@ MOVING_BALL ENDP
 
 
 
+HANDLE_COLLISION PROC
+;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
+   MOV AX,BALL_POSITION_Y
+                  
+                   
 
+                    MOV AX,BALL_POSITION_Y
+                    ADD AX,BALL_SIZE
+                    MOV BX,320
+                    MUL BX
+                    ADD AX,BALL_POSITION_X
+                    MOV SI,AX
+                    MOV DL,BALL_COLOR
+                    CMP ES:[SI],DL
+                    JZ X1
+                    CMP ES:[SI], BYTE PTR  0
+                    JNZ .REVERSE_Y
+
+                X1: MOV AX,BALL_POSITION_Y
+                    SUB AX,BALL_SIZE
+                    MOV BX,320
+                    MUL BX
+                    ADD AX,BALL_POSITION_X
+                    MOV SI,AX
+                    MOV DL,BALL_COLOR
+                    CMP ES:[SI],DL
+                    JZ .RT
+                    CMP ES:[SI], BYTE PTR  0
+                    JNZ .REVERSE_Y  
+
+                .RT:    RET
+                .REVERSE_Y:
+                      NEG  BALL_SPEED_Y           ;REVERSE THE DIRECTION OF SPEED IN Y
+                    RET
+HANDLE_COLLISION ENDP
 
 
 
 DRAWING_BALL PROC
 
+                    
                     MOV  CX, BALL_POSITION_X    ;SET THE COLUMN POSITION OF THE PIXEL
                     MOV  DX, BALL_POSITION_Y    ;SET THE ROW POSITION OF THE PIXEL
-                    MOV  AL, 4H                 ;COLOR OF THE PIXEL IS RED
+                    MOV  AL, BALL_COLOR                 ;COLOR OF THE PIXEL IS RED
                     MOV  AH, 0CH                ;DRAW PIXEL COMMMAND
     DRAW_HORIZONTAL:INT  10H
                     INC  CX                     ;INCREMENT THE SIZE IN X DIRECTION
