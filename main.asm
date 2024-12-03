@@ -1,5 +1,3 @@
-;public BRICK_WIDTH,BRICK_HEIGHT,COLOR_MATRIX,CRNT_BRICK,BRICK_ROW,BRICK_COL,END_ROW,END_COL 
-;EXTRN DRAWBRICK:FAR
 .MODEL SMALL
 .STACK 4000
 .DATA
@@ -26,7 +24,7 @@
 
 BRICK_WIDTH dw  280
 BRICK_HEIGHT dw 4
-COLOR_MATRIX db 5,4,3,2,6,7,8,2,5,6,5,4,3,2,6,7,8,2,5,6
+COLOR_MATRIX db 3,2,3,2,6,7,8,2,5,6,5,4,3,2,6,7,8,2,5,6
 CRNT_BRICK db 0
 ROW dw 70
 COL dw 0
@@ -126,10 +124,6 @@ MOVING_BALL ENDP
 
 HANDLE_COLLISION PROC
 ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-   MOV AX,BALL_POSITION_Y
-                  
-                   
-
                     MOV AX,BALL_POSITION_Y
                     ADD AX,BALL_SIZE
                     MOV BX,320
@@ -157,8 +151,48 @@ HANDLE_COLLISION PROC
                 .RT:    RET
                 .REVERSE_Y:
                       NEG  BALL_SPEED_Y           ;REVERSE THE DIRECTION OF SPEED IN Y
+                      CALL DESTROY_BRICK
                     RET
 HANDLE_COLLISION ENDP
+
+DESTROY_BRICK PROC
+
+GOUP:
+SUB SI,320
+CMP ES:[SI], BYTE PTR  0
+JNZ GOUP
+ADD SI,320
+
+GOLEFT:
+SUB SI,1
+CMP ES:[SI],BYTE PTR 0
+JNZ GOLEFT
+INC SI
+
+DEC COLOR_MATRIX
+
+;MOV CX,0
+;CLEAR:
+;MOV DL,ES:[SI]
+;DEC DL
+;MOV ES:[SI],DL
+;INC CX
+;INC SI
+;CMP CX,BRICK_WIDTH
+;JL CLEAR
+;MOV CX,0
+;SUB SI,BRICK_WIDTH
+;INC SI
+;ADD SI,320
+;INC DX
+;CMP DX,BRICK_HEIGHT
+;JL CLEAR
+
+
+
+RET
+DESTROY_BRICK ENDP
+
 
 
 
@@ -232,8 +266,7 @@ DRAWBRICK PROC
           add si,320
           sub si, BRICK_WIDTH
           cmp si,ENDROW
-          jl draw   
-          
+          jl draw            
           tirm:  
           ret
 DRAWBRICK ENDP
