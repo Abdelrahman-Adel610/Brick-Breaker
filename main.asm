@@ -22,17 +22,28 @@
                     ;Breaks var
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-BRICK_WIDTH dw 35
-BRICK_HEIGHT dw 8
-COLOR_MATRIX db 1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3,1,2,3
-coords dw 24 dup(0) ;(ROWS * COLS)
-CRNT_BRICK dW 0
-ROW dw 4
-COL dw 0
-BRICKS_PER_ROW EQU 8
-TOTAL_ROWS EQU 4
-STEP_PER_ROW EQU 40 ;(BRICK_WIDTH+1PX SPACE)
-STEP_PER_COL EQU 12 ;(BRICK_WIDTH+1PX SPACE)
+    ;size for each brick
+    BRICK_WIDTH EQU 35    
+    BRICK_HEIGHT EQU 8
+
+    ;STARTING POINT TO DRAW BREAKS
+    FIRST_ROW_POS EQU 4
+    FIRST_COL_POS EQU 1
+
+    BRICKS_PER_ROW EQU 8 ; NUMBER OF BRICKS IN EACH ROW
+    TOTAL_ROWS EQU 4     ; NUMBER OF ROWS
+
+    STEP_PER_ROW EQU 40 ;(BRICK_WIDTH+1PX SPACE)
+    STEP_PER_COL EQU 12 ;(BRICK_WIDTH+1PX SPACE)
+
+    COLOR_MATRIX db 11 dup (1,2,3) ; EACH Brick must have certain color here
+
+
+    ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
+    ROW dw FIRST_ROW_POS 
+    COL dw FIRST_COL_POS
+    CRNT_BRICK dW 0 ;counter used to draw each brick with its coressponding color
+
 .CODE
 
 MAIN PROC FAR
@@ -45,7 +56,6 @@ MAIN PROC FAR
                     MOV  AH, 00H
                     MOV  AL, 13H                ;CHOOSE THE VIDEO MODE
                     INT  10H
-
 
                     CALL CLEARING_SCREEN
 
@@ -60,10 +70,10 @@ MAIN PROC FAR
 
                     MOV  PREV_TIME, DL
                     CALL CLEARING_SCREEN        ;TO CLEAR THE SCREEN
-                    CALL DRAW_ALL_BRICKS
+                    CALL DRAW_ALL_BRICKS        ;DRAW ALL BRICKS ACCORDING TO CONFIGS
                     CALL DRAWING_BALL           ;DRAWING BALL
                     CALL MOVING_BALL
-                    CALL HANDLE_COLLISION
+                    CALL HANDLE_COLLISION       ;HANDLE COLLISIONS WITH BRICK
                     JMP  TIME_AGAIN
 
 
@@ -84,8 +94,6 @@ CLEARING_SCREEN PROC
 
                     RET
 CLEARING_SCREEN ENDP
-
-
 
 
 MOVING_BALL PROC
@@ -130,14 +138,15 @@ HANDLE_COLLISION PROC
                     ADD AX,BALL_SIZE
                     MOV BX,320
                     MUL BX
-                    ADD AX,BALL_POSITION_X
-                    MOV SI,AX
+                    ADD AX,BALL_POSITION_X   ;AX=ROWS*320+COLS 
+                    MOV SI,AX                
                     MOV DL,BALL_COLOR
-                    CMP ES:[SI],DL
+                    CMP ES:[SI],DL           ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                     JZ X1
-                    CMP ES:[SI], BYTE PTR  0
-                    JNZ .REVERSE_Y
+                    CMP ES:[SI], BYTE PTR  0 ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK) 
+                    JNZ .REVERSE_Y          
 
+;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
                 X1: MOV AX,BALL_POSITION_Y
                     SUB AX,BALL_SIZE
                     MOV BX,320
@@ -145,15 +154,16 @@ HANDLE_COLLISION PROC
                     ADD AX,BALL_POSITION_X
                     MOV SI,AX
                     MOV DL,BALL_COLOR
-                    CMP ES:[SI],DL
+                    CMP ES:[SI],DL           ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                     JZ .RT
-                    CMP ES:[SI], BYTE PTR  0
+                    CMP ES:[SI], BYTE PTR  0 ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK) 
                     JNZ .REVERSE_Y  
 
                 .RT:    RET
+
                 .REVERSE_Y:
                       NEG  BALL_SPEED_Y           ;REVERSE THE DIRECTION OF SPEED IN Y
-                      CALL DESTROY_BRICK
+                      CALL DESTROY_BRICK          ;DESTROY THE BRICK I COLLIDED WITH
                     RET
 HANDLE_COLLISION ENDP
 
@@ -163,24 +173,23 @@ PUSH BX
 PUSH DX
 PUSH CX
 PUSH DI
-
- MOV DX,0
- MOV AX,SI
- MOV BX,320
- DIV BX      ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
- MOV CX,DX
- MOV DX,0
- MOV BX,STEP_PER_COL
- DIV BX
-;   SUB AX,2
- MOV BP,AX       ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
-
+;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
+  MOV DX,0
+  MOV AX,SI
+  MOV BX,320
+  DIV BX      ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
+  MOV CX,DX
+  MOV DX,0
+  MOV BX,STEP_PER_COL
+  SUB AX,FIRST_ROW_POS
+  DIV BX
+  MOV BP,AX       ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
 
   MOV DX,0
   MOV AX,CX
+  SUB AX,FIRST_COL_POS
   MOV BX,STEP_PER_ROW
   DIV BX
-  ;DEC AX
   MOV CX,AX      ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
   MOV AX,BP
   MOV BX,BRICKS_PER_ROW
@@ -226,24 +235,24 @@ DRAWING_BALL PROC
 DRAWING_BALL ENDP
 
 DRAW_ALL_BRICKS PROC
-MOV CRNT_BRICK,0
-MOV CX,0
-MOV DX,0
+MOV CRNT_BRICK,0   ;INITIALIZE THE BIRCKS COUNTER
+MOV CX,0           ;INITIALIZE THE COLUMNS COUNTER  
+MOV DX,0           ;INITIALIZE THE ROWS COUNTER
 DRAWIT:
 CALL DRAWBRICK
 ADD COL,STEP_PER_ROW
 INC CRNT_BRICK
 INC CX
 CMP CX,BRICKS_PER_ROW
-JL DRAWIT
-MOV CX,0
+JL DRAWIT          ;(IF CX >= BRICKS_PER_ROW ) BREAK
+MOV CX,0           ;REINITIALIZE THE COLUMNS COUNTER
 INC DX
-MOV COL,0
+MOV COL,FIRST_COL_POS  ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW) 
 ADD ROW,STEP_PER_COL
 CMP DX,TOTAL_ROWS
-JL DRAWIT
-MOV ROW,4
-MOV COL,0
+JL DRAWIT          ;(IF DX >= BRICKS_PER_COL ) BREAK
+MOV ROW,FIRST_ROW_POS  ;RESET ROWS & COL TO ITS INITIAL POSITION
+MOV COL,FIRST_COL_POS
 RET
 DRAW_ALL_BRICKS ENDP
 
@@ -258,23 +267,22 @@ PUSH BX
           mov bx,320 ;bx=320
           mul bx     ;ax=ax*bx 
           add ax,COL ;ax==>in now target pixel to draw
-          MOV SI,AX
+          MOV SI,AX  ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
           MOV DI,CRNT_BRICK
-          mov bl,[COLOR_MATRIX+DI]
-          mov cx,0
-          mov coords[di],si
- draw:    mov es:[si],bl
-          inc si
-          inc CX
-          cmp cx,BRICK_WIDTH
-          jl draw
-          add si,320
-          sub si, BRICK_WIDTH
-          INC DX
-          MOV CX,0
-          CMP DX,BRICK_HEIGHT
-          jl draw            
-          tirm:       
+          mov bl,[COLOR_MATRIX+DI] ;STORE THE COLOR OF THE CRNT BRICK
+          mov cx,0                 ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
+          mov dx,0                 ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK) 
+ draw:    mov es:[si],bl           ;COLOR THIS PIXEL
+          inc si                   ;GO RIGHT   
+          inc CX            
+          cmp cx,BRICK_WIDTH       
+          jl draw                  ;(IF CX >= BRICKS_WIDTH ) BREAK
+          add si,320               ;GO DOWN (GO TO THE NEXT ROW)
+          sub si, BRICK_WIDTH      ;GO TO BACK TO THE START OF THE BRICK
+          INC DX                    
+          MOV CX,0                 ;RESET COLUMNS COUNTER
+          CMP DX,BRICK_HEIGHT       
+          jl draw                  ;(IF DX >= BRICK_HEIGHT ) BREAK       
 POP BX
 POP AX
 pop CX
