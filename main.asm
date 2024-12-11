@@ -15,22 +15,46 @@
     BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
     BALL_SPEED_X    DW  2H
 
-    BALL_COLOR      DB  04H               ;RED COLOR
+    BALL_COLOR      DB  0FH               ;RED COLOR  CHANGED TO WHITE TO HANDLE THE COLLISIONS
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Paddle var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     width_Paddle    DW  50d
     height_Paddle   DW  4d
 
-    Time_Aux        DB  0                 ; variable used when changing if the time is changed
-
+    Paddle_Color    DB  0FH
     Paddle_Speed    DW  6
 
     Paddle_X        DW  135D
-    Paddle_Y        DW  195D
+    Paddle_Y        DW  196D
 
     LeftBoundry     DW  265
     RightBoundry    DW  6
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;PowerUp var
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    PowerUpWidth    DW  10d
+    PowerUpHeight   DW  10d
+
+    PowerUP_Speed   DW  1
+
+    PowerUp_X       DW  135D
+    PowerUp_Y       DW  155D
+
+    IsPowerUp       DW  0
+    Points          DW  0
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;PowerDown var
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    PowerDownWidth  DW  10d
+    PowerDownHeight DW  10d
+
+ 
+    PowerDown_Speed DW  1
+
+    PowerDown_X     DW  135D
+    PowerDown_Y     DW  155D
+    IsPowerDown     DW  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Breaks var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -61,187 +85,228 @@
 
 MAIN PROC FAR
 
-                           MOV  AX, @DATA
-                           MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
+                              MOV  AX, @DATA
+                              MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
 
-                           mov  ax, 0A000h                ; Video memory segment for mode 13h
-                           mov  es, ax                    ; Set ES to point to video memory
-                           MOV  AH, 00H
-                           MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
-                           INT  10H
+                              mov  ax, 0A000h                ; Video memory segment for mode 13h
+                              mov  es, ax                    ; Set ES to point to video memory
+                              MOV  AH, 00H
+                              MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
+                              INT  10H
 
-                           CALL CLEARING_SCREEN
+                              CALL CLEARING_SCREEN
     ; CALL Move_Paddle
 
-    TIME_AGAIN:            MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                           INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
+    TIME_AGAIN:               MOV  AH, 2CH                   ;GET THE SYSTEM TIME
+                              INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
 
-                           MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                           CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
-                           JE   TIME_AGAIN
-
-
-                           MOV  PREV_TIME, DL
-                           CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                           CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                           CALL DRAWING_BALL              ;DRAWING BALL
-
-                           CALL Move_Paddle
-                           CALL Draw_Paddle
-                           CALL MOVING_BALL
-                           CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-                           JMP  TIME_AGAIN
+                              MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
+                              CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
+                              JE   TIME_AGAIN
 
 
-                           RET
+                              MOV  PREV_TIME, DL
+                              CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
+                              CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
+                              CALL DRAWING_BALL              ;DRAWING BALL
+
+                              CALL Move_Paddle
+                              CALL Draw_Paddle
+                              CALL MOVING_BALL
+                              CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
+
+                              CMP  IsPowerUp,0               ; CHECK IF THERE IS A POWERUP
+                              JE   CHWCK_POWERDOWN
+                              CALL Draw_PowerUp
+                              CALL DRAW_UP_ARROW
+                              CALL Move_Power_UP
+
+    CHWCK_POWERDOWN:          
+                              CMP  IsPowerDown,0             ; CHECK IF THERE IS A POWERDOWN
+                              JE   TIME_AGAIN
+                              CALL Draw_PowerDown
+                              CALL DRAW_DOWN_ARROW
+                              CALL Move_Power_Down
+
+    ;    CALL Duplicate_Paddle_Velocity    ;Power up
+    ;    CALL Halv_Paddle_Velocity         ;Power down
+    ;    CALL Duplicate_Paddle_Size        ;Power up
+    ;    CALL Halv_Paddle_Size             ;Power down
+
+                              JMP  TIME_AGAIN
+
+
+                              RET
 MAIN ENDP
 
 
 
 CLEARING_SCREEN PROC
 
-                           MOV  AH, 06H                   ;SCROLL UP
-                           XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                           XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                           MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                           MOV  BH, 00H                   ;BLACK COLOR
-                           INT  10H                       ;CLEAR THE SCREEN
+                              MOV  AH, 06H                   ;SCROLL UP
+                              XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
+                              XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
+                              MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
+                              MOV  BH, 00H                   ;BLACK COLOR
+                              INT  10H                       ;CLEAR THE SCREEN
 
 
-                           RET
+                              RET
 CLEARING_SCREEN ENDP
 
 
 MOVING_BALL PROC
+                              PUSH AX
+                              MOV  AX, BALL_SPEED_Y
+                              SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
 
-                           MOV  AX, BALL_SPEED_Y
-                           SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
+                              CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
+                              JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
 
-                           CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                           JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
+                              MOV  AX, MAX_HIGHT
+                              SUB  AX, BALL_SIZE
+                              CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
+                              JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
 
-                           MOV  AX, MAX_HIGHT
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                           JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
+                              MOV  AX, BALL_SPEED_X
+                              ADD  BALL_POSITION_X, AX       ;MOV RIGHT
 
-                           MOV  AX, BALL_SPEED_X
-                           ADD  BALL_POSITION_X, AX       ;MOV RIGHT
+                              CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
+                              JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
 
-                           CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                           JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
-
-                           MOV  AX, MAX_WIDTH
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                           JG   REVERSE_X                 ;REVERSE IF GREATER
+                              MOV  AX, MAX_WIDTH
+                              SUB  AX, BALL_SIZE
+                              CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
+                              JG   REVERSE_X                 ;REVERSE IF GREATER
 
 
     ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
 
-                           MOV  AX,Paddle_X
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->Start
-                           JB   NOT_COLLIDE
-                           ADD  AX,width_Paddle
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->End
-                           JBE  CHECK_Y
+                              MOV  AX,Paddle_X
+                              SUB  AX, BALL_SIZE
+                              ADD  AX,BALL_SPEED_X
+                              CMP  BALL_POSITION_X,AX        ;; Check x -->Start
+                              JB   NOT_COLLIDE
 
-    CHECK_Y:               
-                           MOV  AX,Paddle_Y
-                           SUB  AX,height_Paddle
-                           CMP  AX, BALL_POSITION_Y
-                           JA   NOT_COLLIDE
-                           JMP  REVERSE_Y
+                              ADD  AX,width_Paddle
+                              SUB  AX, BALL_SIZE
+                              ADD  AX,BALL_SPEED_X
+                              CMP  BALL_POSITION_X,AX        ;; Check x -->End
+                              JG   NOT_COLLIDE
+
+    CHECK_Y:                  
+
+                              MOV  AX, Paddle_Y
+                              SUB  AX, BALL_SIZE
+                              ADD  AX,BALL_SPEED_Y
+                              CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
+                              JGE  REVERSE_Y
+
+    NOT_COLLIDE:              
+    ;;;;;;;;;;;;;;;;
 
 
-    NOT_COLLIDE:           
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
+    RT:                       POP  AX
+                              RET
 
+    REVERSE_Y:                NEG  BALL_SPEED_Y
+                              POP  AX                        ;REVERSE THE DIRECTION OF SPEED IN Y
+                              RET
 
-    RT:                    RET
-
-    REVERSE_Y:             NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           RET
-
-    REVERSE_X:             NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
-
-                           RET
+    REVERSE_X:                NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
+                              POP  AX
+                              RET
 MOVING_BALL ENDP
 
 
 
 HANDLE_COLLISION PROC
     ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-                           MOV  AX,BALL_POSITION_Y
-                           ADD  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   X1
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
+                              MOV  AX,BALL_POSITION_Y
+                              ADD  AX,BALL_SIZE
+                              MOV  BX,320
+                              MUL  BX
+                              ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
+                              MOV  SI,AX
+                              MOV  DL,BALL_COLOR
+                              CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              JZ   X1
+                              CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              JNZ  .REVERSE_Y
 
     ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
-    X1:                    MOV  AX,BALL_POSITION_Y
-                           SUB  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   .RT
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
+    X1:                       MOV  AX,BALL_POSITION_Y
+                              SUB  AX,BALL_SIZE
+                              MOV  BX,320
+                              MUL  BX
+                              ADD  AX,BALL_POSITION_X
+                              MOV  SI,AX
+                              MOV  DL,BALL_COLOR
+                              CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              JZ   .RT
+                              CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              JNZ  .REVERSE_Y
 
 .RT: RET
 
 .REVERSE_Y:
-                           NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
-                           RET
+                              NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
+                              CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
+                              RET
 HANDLE_COLLISION ENDP
 
 DESTROY_BRICK PROC
-                           PUSH AX
-                           PUSH BX
-                           PUSH DX
-                           PUSH CX
-                           PUSH DI
+                              PUSH AX
+                              PUSH BX
+                              PUSH DX
+                              PUSH CX
+                              PUSH DI
     ;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
-                           MOV  DX,0
-                           MOV  AX,SI
-                           MOV  BX,320
-                           DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
-                           MOV  CX,DX
-                           MOV  DX,0
-                           MOV  BX,STEP_PER_COL
-                           SUB  AX,FIRST_ROW_POS
-                           DIV  BX
-                           MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
+                              MOV  DX,0
+                              MOV  AX,SI
+                              MOV  BX,320
+                              DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
+    ;;;;;;;;;;;;;;;;;;
 
-                           MOV  DX,0
-                           MOV  AX,CX
-                           SUB  AX,FIRST_COL_POS
-                           MOV  BX,STEP_PER_ROW
-                           DIV  BX
-                           MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
-                           MOV  AX,BP
-                           MOV  BX,BRICKS_PER_ROW
-                           MUL  BX
-                           ADD  AX,CX
-                           MOV  DI,AX
-                           DEC  [COLOR_MATRIX+DI]
+                              PUSH AX
+                              INC  Points
+                              CMP  Points,3
+                              JNE  CNT
+                              MOV  IsPowerDown,1
+                              MOV  PowerDown_X,DX
+                              MOV  PowerDown_Y,AX
+                              CALL Draw_PowerDown
+                              CALL DRAW_DOWN_ARROW
+                              
+    CNT:                      
+                              POP  AX
+    ;;;;;;;;;;;;;;;;;;
+                              MOV  CX,DX
+                              MOV  DX,0
+                              MOV  BX,STEP_PER_COL
+                              SUB  AX,FIRST_ROW_POS
+                              DIV  BX
+                              MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
 
-                           POP  DI
-                           POP  CX
-                           POP  DX
-                           POP  BX
-                           POP  AX
-                           RET
+                              MOV  DX,0
+                              MOV  AX,CX
+                              SUB  AX,FIRST_COL_POS
+                              MOV  BX,STEP_PER_ROW
+                              DIV  BX
+                              MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
+                              MOV  AX,BP
+                              MOV  BX,BRICKS_PER_ROW
+                              MUL  BX
+                              ADD  AX,CX
+                              MOV  DI,AX
+                              DEC  [COLOR_MATRIX+DI]
+
+                              POP  DI
+                              POP  CX
+                              POP  DX
+                              POP  BX
+                              POP  AX
+                              RET
 DESTROY_BRICK ENDP
 
 
@@ -250,151 +315,151 @@ DESTROY_BRICK ENDP
 DRAWING_BALL PROC
 
                     
-                           MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                           MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                           MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                           MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
-    DRAW_HORIZONTAL:       INT  10H
-                           INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                           MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                           SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
-                           JL   DRAW_HORIZONTAL
+                              MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
+                              MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
+                              MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
+                              MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
+    DRAW_HORIZONTAL:          INT  10H
+                              INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
+                              MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
+                              SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
+                              CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
+                              JL   DRAW_HORIZONTAL
 
 
-                           INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                           MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
-                           MOV  BX, DX
-                           SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE
-                           JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                           RET                            ;ELSE WILL RETURN
+                              INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
+                              MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
+                              MOV  BX, DX
+                              SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
+                              CMP  BX, BALL_SIZE
+                              JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
+                              RET                            ;ELSE WILL RETURN
 
 DRAWING_BALL ENDP
 
 DRAW_ALL_BRICKS PROC
-                           MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                           MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                           MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
-    DRAWIT:                
-                           CALL DRAWBRICK
-                           ADD  COL,STEP_PER_ROW
-                           INC  CRNT_BRICK
-                           INC  CX
-                           CMP  CX,BRICKS_PER_ROW
-                           JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                           MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
-                           INC  DX
-                           MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
-                           ADD  ROW,STEP_PER_COL
-                           CMP  DX,TOTAL_ROWS
-                           JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                           MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
-                           MOV  COL,FIRST_COL_POS
-                           RET
+                              MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
+                              MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
+                              MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
+    DRAWIT:                   
+                              CALL DRAWBRICK
+                              ADD  COL,STEP_PER_ROW
+                              INC  CRNT_BRICK
+                              INC  CX
+                              CMP  CX,BRICKS_PER_ROW
+                              JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
+                              MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
+                              INC  DX
+                              MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
+                              ADD  ROW,STEP_PER_COL
+                              CMP  DX,TOTAL_ROWS
+                              JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
+                              MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
+                              MOV  COL,FIRST_COL_POS
+                              RET
 DRAW_ALL_BRICKS ENDP
 
 
 
 DRAWBRICK PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-                           mov  ax,ROW                    ;==>column number
-                           mov  bx,320                    ;bx=320
-                           mul  bx                        ;ax=ax*bx
-                           add  ax,COL                    ;ax==>in now target pixel to draw
-                           MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
-                           MOV  DI,CRNT_BRICK
-                           mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                           mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                           mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                  mov  es:[si],bl                ;COLOR THIS PIXEL
-                           inc  si                        ;GO RIGHT
-                           inc  CX
-                           cmp  cx,BRICK_WIDTH
-                           jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                           add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                           sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
-                           INC  DX
-                           MOV  CX,0                      ;RESET COLUMNS COUNTER
-                           CMP  DX,BRICK_HEIGHT
-                           jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           ret
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+                              mov  ax,ROW                    ;==>column number
+                              mov  bx,320                    ;bx=320
+                              mul  bx                        ;ax=ax*bx
+                              add  ax,COL                    ;ax==>in now target pixel to draw
+                              MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
+                              MOV  DI,CRNT_BRICK
+                              mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
+                              mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
+                              mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
+    draw:                     mov  es:[si],bl                ;COLOR THIS PIXEL
+                              inc  si                        ;GO RIGHT
+                              inc  CX
+                              cmp  cx,BRICK_WIDTH
+                              jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
+                              add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
+                              sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
+                              INC  DX
+                              MOV  CX,0                      ;RESET COLUMNS COUNTER
+                              CMP  DX,BRICK_HEIGHT
+                              jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+                              ret
 DRAWBRICK ENDP
 
 Move_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
 
-                           MOV  AH, 01h                   ; Function to check if a key is pressed
-                           INT  16h                       ; Call BIOS interrupt
-                           JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
+                              MOV  AH, 01h                   ; Function to check if a key is pressed
+                              INT  16h                       ; Call BIOS interrupt
+                              JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
     ; Code to handle key press
-                           JMP  Done
+                              JMP  Done
 
-    NoKey:                 
-                           JMP  rett
+    NoKey:                    
+                              JMP  rett
 
-    Done:                  
+    Done:                     
 
     ; Read the key
-                           MOV  AH, 00h
-                           INT  16h
+                              MOV  AH, 00h
+                              INT  16h
            
     ; Check for left arrow (E0 4B)
-                           CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   left_pressed              ; Jump if Left Arrow
+                              CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
+                              JE   left_pressed              ; Jump if Left Arrow
                   
     ; Check for right arrow (E0 4D)
-                           CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   right_pressed             ; Jump if Right Arrow
+                              CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
+                              JE   right_pressed             ; Jump if Right Arrow
                    
-                           JMP  rett                      ; Return to polling
+                              JMP  rett                      ; Return to polling
                         
-    left_pressed:          
+    left_pressed:             
                    
     ; Check for the boundries
-                           MOV  BX,Paddle_Speed
-                           SUB  Paddle_X,BX
-                           MOV  AX,RightBoundry
-                           CMP  Paddle_X,AX
-                           JB   Maintain_Right_Boundry
-                           JMP  rett                      ; Return to polling
+                              MOV  BX,Paddle_Speed
+                              SUB  Paddle_X,BX
+                              MOV  AX,RightBoundry
+                              CMP  Paddle_X,AX
+                              JB   Maintain_Right_Boundry
+                              JMP  rett                      ; Return to polling
                    
-    right_pressed:         
-                           MOV  BX,Paddle_Speed
-                           ADD  Paddle_X,BX
-                           MOV  AX,LeftBoundry
-                           CMP  Paddle_X,AX
-                           JA   Maintain_Left_Boundry
-                           JMP  rett                      ; Return to polling
+    right_pressed:            
+                              MOV  BX,Paddle_Speed
+                              ADD  Paddle_X,BX
+                              MOV  AX,LeftBoundry
+                              CMP  Paddle_X,AX
+                              JA   Maintain_Left_Boundry
+                              JMP  rett                      ; Return to polling
      
      	                 
-    Maintain_Right_Boundry:
-                           MOV  AX,RightBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
+    Maintain_Right_Boundry:   
+                              MOV  AX,RightBoundry
+                              MOV  Paddle_X,AX
+                              JMP  rett
 	                   
-    Maintain_Left_Boundry: 
-                           MOV  AX,LeftBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
+    Maintain_Left_Boundry:    
+                              MOV  AX,LeftBoundry
+                              MOV  Paddle_X,AX
+                              JMP  rett
 
 
-    rett:                  
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           RET
+    rett:                     
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+                              RET
 
 Move_Paddle endp
     
@@ -402,3344 +467,478 @@ Move_Paddle endp
                   
            
 Draw_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
                
-    ;                        MOV  CX,0
-    ;                        MOV  DX,Paddle_Y
-	                 
-	                 
-    ; clear_The_Screen_hori:
-	                 
-    ;                        MOV  AX,320
-    ; clear_The_Screen_ver:
-    ; ; AL = Color, BH = Page Number, CX = x, DX = y
-    ;                        PUSH AX
-    ;                        MOV  AH,0CH
-    ;                        MOV  AL,00H
-    ;                        MOV  BH,00
-    ;                        INT  10h
-    ;                        INC  CX
-    ;                        POP  AX
-    ;                        DEC  AX
-    ;                        JNZ  clear_The_Screen_ver
-    ;                        MOV  CX,0
-    ;                        INC  DX
-    ;                        CMP  DX,199
-    ;                        JNZ  clear_The_Screen_hori
-	                 
+
     ; the coordinates of the paddle
 	                 
-                           MOV  CX,Paddle_X
-                           MOV  DX,Paddle_Y
+                              MOV  CX,Paddle_X
+                              MOV  DX,Paddle_Y
 	                 	                 
 		
-    draw_Paddle_hori:      
-                           MOV  BX,width_Paddle
+    draw_Paddle_hori:         
+                              MOV  BX,width_Paddle
 	                 
  	
-    draw_Paddle_ver:       
+    draw_Paddle_ver:          
     ; AL = Color, BH = Page Number, CX = x, DX = y
-                           MOV  AH,0CH
-                           MOV  AL,07H
-                           PUSH BX
-                           MOV  BH,00
-                           INT  10h
-                           INC  CX
-                           POP  BX
-                           DEC  BL
-                           JNZ  draw_Paddle_ver
-                           MOV  CX,Paddle_X
-                           INC  DX
-                           CMP  DX,199
-                           JNZ  draw_Paddle_hori
+                              MOV  AH,0CH
+                              MOV  AL,Paddle_Color
+                              PUSH BX
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              POP  BX
+                              DEC  BL
+                              JNZ  draw_Paddle_ver
+                              MOV  CX,Paddle_X
+                              INC  DX
+                              CMP  DX,199
+                              JNZ  draw_Paddle_hori
 	    
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
                            
-                           RET
+                              RET
 Draw_Paddle endp
 
 
 
-end main.MODEL SMALL
-.STACK 4000
-.DATA
 
-    MAX_WIDTH       DW  140H              ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT       DW  0C8H              ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
-
-    BALL_POSITION_X DW  0A0H              ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y DW  64H               ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE       EQU 05H               ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
-
-    PREV_TIME       DB  0                 ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED      DB  7H                ;TO CONTROLL THE SPEED OF THE BALL
-
-    BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X    DW  2H
-
-    BALL_COLOR      DB  04H               ;RED COLOR
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Paddle var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle    DW  50d
-    height_Paddle   DW  4d
-
-    Time_Aux        DB  0                 ; variable used when changing if the time is changed
-
-    Paddle_Speed    DW  6
-
-    Paddle_X        DW  135D
-    Paddle_Y        DW  195D
-
-    LeftBoundry     DW  265
-    RightBoundry    DW  6
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Breaks var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;size for each brick
-    BRICK_WIDTH     EQU 35
-    BRICK_HEIGHT    EQU 8
-
-    ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
-    FIRST_COL_POS   EQU 1
-
-    BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS      EQU 4                 ; NUMBER OF ROWS
-
-    STEP_PER_ROW    EQU 40                ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL    EQU 12                ;(BRICK_WIDTH+1PX SPACE)
-
-    COLOR_MATRIX    db  11 dup (1,2,3)    ; EACH Brick must have certain color here
-
-
-    ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW             dw  FIRST_ROW_POS
-    COL             dw  FIRST_COL_POS
-    CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
-
-.CODE
-
-MAIN PROC FAR
-
-                           MOV  AX, @DATA
-                           MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
-
-                           mov  ax, 0A000h                ; Video memory segment for mode 13h
-                           mov  es, ax                    ; Set ES to point to video memory
-                           MOV  AH, 00H
-                           MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
-                           INT  10H
-
-                           CALL CLEARING_SCREEN
-    ; CALL Move_Paddle
-
-    TIME_AGAIN:            MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                           INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
-
-                           MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                           CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
-                           JE   TIME_AGAIN
-
-
-                           MOV  PREV_TIME, DL
-                           CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                           CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                           CALL DRAWING_BALL              ;DRAWING BALL
-
-                           CALL Move_Paddle
-                           CALL Draw_Paddle
-                           CALL MOVING_BALL
-                           CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-                           JMP  TIME_AGAIN
-
-
-                           RET
-MAIN ENDP
-
-
-
-CLEARING_SCREEN PROC
-
-                           MOV  AH, 06H                   ;SCROLL UP
-                           XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                           XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                           MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                           MOV  BH, 00H                   ;BLACK COLOR
-                           INT  10H                       ;CLEAR THE SCREEN
-
-
-                           RET
-CLEARING_SCREEN ENDP
-
-
-MOVING_BALL PROC
-
-                           MOV  AX, BALL_SPEED_Y
-                           SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
-
-                           CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                           JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
-
-                           MOV  AX, MAX_HIGHT
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                           JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
-
-                           MOV  AX, BALL_SPEED_X
-                           ADD  BALL_POSITION_X, AX       ;MOV RIGHT
-
-                           CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                           JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
-
-                           MOV  AX, MAX_WIDTH
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                           JG   REVERSE_X                 ;REVERSE IF GREATER
-
-
-    ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
-
-                           MOV  AX,Paddle_X
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->Start
-                           JB   NOT_COLLIDE
-                           ADD  AX,width_Paddle
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->End
-                           JBE  CHECK_Y
-
-    CHECK_Y:               
-                           MOV  AX,Paddle_Y
-                           SUB  AX,height_Paddle
-                           CMP  AX, BALL_POSITION_Y
-                           JA   NOT_COLLIDE
-                           JMP  REVERSE_Y
-
-
-    NOT_COLLIDE:           
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-    RT:                    RET
-
-    REVERSE_Y:             NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           RET
-
-    REVERSE_X:             NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
-
-                           RET
-MOVING_BALL ENDP
-
-
-
-HANDLE_COLLISION PROC
-    ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-                           MOV  AX,BALL_POSITION_Y
-                           ADD  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   X1
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-    ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
-    X1:                    MOV  AX,BALL_POSITION_Y
-                           SUB  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   .RT
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-.RT: RET
-
-.REVERSE_Y:
-                           NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
-                           RET
-HANDLE_COLLISION ENDP
-
-DESTROY_BRICK PROC
-                           PUSH AX
-                           PUSH BX
-                           PUSH DX
-                           PUSH CX
-                           PUSH DI
-    ;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
-                           MOV  DX,0
-                           MOV  AX,SI
-                           MOV  BX,320
-                           DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
-                           MOV  CX,DX
-                           MOV  DX,0
-                           MOV  BX,STEP_PER_COL
-                           SUB  AX,FIRST_ROW_POS
-                           DIV  BX
-                           MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
-
-                           MOV  DX,0
-                           MOV  AX,CX
-                           SUB  AX,FIRST_COL_POS
-                           MOV  BX,STEP_PER_ROW
-                           DIV  BX
-                           MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
-                           MOV  AX,BP
-                           MOV  BX,BRICKS_PER_ROW
-                           MUL  BX
-                           ADD  AX,CX
-                           MOV  DI,AX
-                           DEC  [COLOR_MATRIX+DI]
-
-                           POP  DI
-                           POP  CX
-                           POP  DX
-                           POP  BX
-                           POP  AX
-                           RET
-DESTROY_BRICK ENDP
-
-
-
-
-DRAWING_BALL PROC
-
-                    
-                           MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                           MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                           MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                           MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
-    DRAW_HORIZONTAL:       INT  10H
-                           INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                           MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                           SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
-                           JL   DRAW_HORIZONTAL
-
-
-                           INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                           MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
-                           MOV  BX, DX
-                           SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE
-                           JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                           RET                            ;ELSE WILL RETURN
-
-DRAWING_BALL ENDP
-
-DRAW_ALL_BRICKS PROC
-                           MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                           MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                           MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
-    DRAWIT:                
-                           CALL DRAWBRICK
-                           ADD  COL,STEP_PER_ROW
-                           INC  CRNT_BRICK
-                           INC  CX
-                           CMP  CX,BRICKS_PER_ROW
-                           JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                           MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
-                           INC  DX
-                           MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
-                           ADD  ROW,STEP_PER_COL
-                           CMP  DX,TOTAL_ROWS
-                           JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                           MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
-                           MOV  COL,FIRST_COL_POS
-                           RET
-DRAW_ALL_BRICKS ENDP
-
-
-
-DRAWBRICK PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-                           mov  ax,ROW                    ;==>column number
-                           mov  bx,320                    ;bx=320
-                           mul  bx                        ;ax=ax*bx
-                           add  ax,COL                    ;ax==>in now target pixel to draw
-                           MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
-                           MOV  DI,CRNT_BRICK
-                           mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                           mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                           mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                  mov  es:[si],bl                ;COLOR THIS PIXEL
-                           inc  si                        ;GO RIGHT
-                           inc  CX
-                           cmp  cx,BRICK_WIDTH
-                           jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                           add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                           sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
-                           INC  DX
-                           MOV  CX,0                      ;RESET COLUMNS COUNTER
-                           CMP  DX,BRICK_HEIGHT
-                           jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           ret
-DRAWBRICK ENDP
-
-Move_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-
-                           MOV  AH, 01h                   ; Function to check if a key is pressed
-                           INT  16h                       ; Call BIOS interrupt
-                           JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
-    ; Code to handle key press
-                           JMP  Done
-
-    NoKey:                 
-                           JMP  rett
-
-    Done:                  
-
-    ; Read the key
-                           MOV  AH, 00h
-                           INT  16h
-           
-    ; Check for left arrow (E0 4B)
-                           CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   left_pressed              ; Jump if Left Arrow
-                  
-    ; Check for right arrow (E0 4D)
-                           CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   right_pressed             ; Jump if Right Arrow
-                   
-                           JMP  rett                      ; Return to polling
-                        
-    left_pressed:          
-                   
-    ; Check for the boundries
-                           MOV  BX,Paddle_Speed
-                           SUB  Paddle_X,BX
-                           MOV  AX,RightBoundry
-                           CMP  Paddle_X,AX
-                           JB   Maintain_Right_Boundry
-                           JMP  rett                      ; Return to polling
-                   
-    right_pressed:         
-                           MOV  BX,Paddle_Speed
-                           ADD  Paddle_X,BX
-                           MOV  AX,LeftBoundry
-                           CMP  Paddle_X,AX
-                           JA   Maintain_Left_Boundry
-                           JMP  rett                      ; Return to polling
+    ;;;;;;;;;;;; PowerUp's & Down's
+Duplicate_Paddle_Velocity PROC
+                              PUSH AX
+                              MOV  AX,Paddle_Speed
+                              ADD  Paddle_Speed,AX
+                              POP  AX
+                              RET
+Duplicate_Paddle_Velocity endp
+
+Halv_Paddle_Velocity PROC
+                              PUSH AX
+                              MOV  AX,Paddle_Speed
+                              SHR  AX,1
+                              MOV  Paddle_Speed,AX
+                              POP  AX
+                              RET
+Halv_Paddle_Velocity endp
+
+Duplicate_Paddle_Size PROC
+                              PUSH AX
+                              MOV  AX,width_Paddle
+                              ADD  width_Paddle,AX
+                              MOV  Paddle_X,160D
+                              SUB  Paddle_X,AX
+                              POP  AX
+                              RET
+Duplicate_Paddle_Size endp
+
+    ; Halv_Paddle_Size PROC
+    ;                               PUSH AX
+    ;                               MOV  AX,width_Paddle
+    ;                               SHR  AX,1
+    ;                               MOV  width_Paddle,AX
+    ;                               SHR  AX,1
+    ;                               MOV  Paddle_X,160-AX
+    ;                               POP  AX
+    ;                               RET
+    ; Halv_Paddle_Size endp
+
+    ;;;;;;;;;;;;;;;;;;;
+
+    ;;;;;;
+Move_Power_UP PROC
+    
+                              PUSH AX
+    ;;;;;;;;;;;;;;;; Check PowerUP-Paddle collision
+
+
+                              MOV  AX,Paddle_Y
+                              SUB  AX, PowerUpHeight         ; check for y-axis
+                              CMP  PowerUp_Y,AX
+                              JB   StillAbove
+
+                              MOV  AX,Paddle_X               ; check for x-axis
+                              CMP  PowerUp_X,AX
+                              JB   NOT_COLLIDE_POWERUP
+                              ADD  AX,width_Paddle
+                              CMP  PowerUp_X,AX
+                              JBE  COLLIDE_POWERUP
+                              JMP  NOT_COLLIDE_POWERUP
+
+
+    StillAbove:                                              ; the powerUp is above the paddle
+                              MOV  AX,PowerUp_Speed
+                              ADD  PowerUp_Y,AX
+                              POP  AX
+                              RET
+
+    NOT_COLLIDE_POWERUP:      
+                              MOV  IsPowerUp,0
+                              POP  AX
+                              RET
+    COLLIDE_POWERUP:          
+                              MOV  IsPowerUp,0
+                              CALL Duplicate_Paddle_Size     ;Power up
+                              POP  AX
+                              RET
+
+Move_Power_UP endp
+
+Move_Power_Down PROC
+    
+                              PUSH AX
+    ;;;;;;;;;;;;;;;; Check PowerDOWN-Paddle collision
+
+
+                              MOV  AX,Paddle_Y
+                              SUB  AX, PowerDownHeight       ; check for y-axis
+                              CMP  PowerDown_Y,AX
+                              JB   StillAbove_Down
+
+                              MOV  AX,Paddle_X               ; check for x-axis
+                              CMP  PowerDown_X,AX
+                              JB   NOT_COLLIDE_POWERDOWN
+                              ADD  AX,width_Paddle
+                              CMP  PowerDown_X,AX
+                              JBE  COLLIDE_POWERDOWN
+                              JMP  NOT_COLLIDE_POWERDOWN
+
+
+    StillAbove_Down:                                         ; the powerDown is above the paddle
+                              MOV  AX,PowerDown_Speed
+                              ADD  PowerDown_Y,AX
+                              POP  AX
+                              RET
+
+    NOT_COLLIDE_POWERDOWN:    
+                              MOV  IsPowerDown,0
+                              POP  AX
+                              RET
+    COLLIDE_POWERDOWN:        
+                              MOV  IsPowerDown,0
+                              CALL Duplicate_Paddle_Size     ;Power up
+                              POP  AX
+                              RET
+
+Move_Power_Down endp
+    ;;;;;;;
+
+    
+Draw_PowerUp PROC
+    
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+
+
+                              MOV  CX,PowerUp_X
+                              MOV  DX,PowerUp_Y
+    
+    drawUP_hori:              
+                              MOV  BX,PowerUpWidth
+	                      
+ 	
+    drawUP_ver:               
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,02H                    ; Green Shape
+                              PUSH BX
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              POP  BX
+                              DEC  BX
+                              JNZ  drawUP_ver
+                              MOV  CX,PowerUp_X
+                              INC  DX
+                              MOV  AX,PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              CMP  DX,AX
+                              JNZ  drawUP_hori
+
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+
+                              RET
+Draw_PowerUp ENDP
+
+    
+Draw_PowerDown PROC
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+
+
+                              MOV  CX,PowerDown_X
+                              MOV  DX,PowerDown_Y
+    
+    drawDown_hori:            
+                              MOV  BX,PowerDownWidth
+	                      
+ 	
+    drawDown_ver:             
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,04H                    ; Red Shape
+                              PUSH BX
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              POP  BX
+                              DEC  BX
+                              JNZ  drawDown_ver
+                              MOV  CX,PowerDown_X
+                              INC  DX
+                              MOV  AX,PowerDown_Y
+                              ADD  AX,PowerDownHeight
+                              CMP  DX,AX
+                              JNZ  drawDown_hori
+
+
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+
+                              RET
+Draw_PowerDown ENDP
+
+
+DRAW_UP_ARROW PROC
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+                              
+                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerUpWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              ADD  DX,2
+    
+    loopUp_:                                                 ; Draw the first line in the first arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,0fH
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              INC  DX
+                              MOV  AX, PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              SUB  AX, 3
+                              CMP  DX,AX
+                              JB   loopUp_
+                            
+                            
+                            
+                                    
+                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerUpWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              ADD  DX,2
+    
+    loopUpInv_:                                              ; Draw the second line in the first arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,0fH
+                              MOV  BH,00
+                              INT  10h
+                              DEC  CX
+                              INC  DX
+                              MOV  AX, PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              SUB  AX, 3
+                              CMP  DX,AX
+                              JB   loopUpInv_
+                           
+                           
+                           
      
-     	                 
-    Maintain_Right_Boundry:
-                           MOV  AX,RightBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-	                   
-    Maintain_Left_Boundry: 
-                           MOV  AX,LeftBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-
-
-    rett:                  
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           RET
-
-Move_Paddle endp
+                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerUpWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerUp_Y              ; Set  Y position to the vertex of the arrow
+                              ADD  DX,4
     
-    
-                  
-           
-Draw_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-               
-    ;                        MOV  CX,0
-    ;                        MOV  DX,Paddle_Y
-	                 
-	                 
-    ; clear_The_Screen_hori:
-	                 
-    ;                        MOV  AX,320
-    ; clear_The_Screen_ver:
-    ; ; AL = Color, BH = Page Number, CX = x, DX = y
-    ;                        PUSH AX
-    ;                        MOV  AH,0CH
-    ;                        MOV  AL,00H
-    ;                        MOV  BH,00
-    ;                        INT  10h
-    ;                        INC  CX
-    ;                        POP  AX
-    ;                        DEC  AX
-    ;                        JNZ  clear_The_Screen_ver
-    ;                        MOV  CX,0
-    ;                        INC  DX
-    ;                        CMP  DX,199
-    ;                        JNZ  clear_The_Screen_hori
-	                 
-    ; the coordinates of the paddle
-	                 
-                           MOV  CX,Paddle_X
-                           MOV  DX,Paddle_Y
-	                 	                 
-		
-    draw_Paddle_hori:      
-                           MOV  BX,width_Paddle
-	                 
- 	
-    draw_Paddle_ver:       
+    loopUp2_:                                                ; Draw the first line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
-                           MOV  AH,0CH
-                           MOV  AL,07H
-                           PUSH BX
-                           MOV  BH,00
-                           INT  10h
-                           INC  CX
-                           POP  BX
-                           DEC  BL
-                           JNZ  draw_Paddle_ver
-                           MOV  CX,Paddle_X
-                           INC  DX
-                           CMP  DX,199
-                           JNZ  draw_Paddle_hori
-	    
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           
-                           RET
-Draw_Paddle endp
-
-
-
-end main.MODEL SMALL
-.STACK 4000
-.DATA
-
-    MAX_WIDTH       DW  140H              ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT       DW  0C8H              ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
-
-    BALL_POSITION_X DW  0A0H              ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y DW  64H               ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE       EQU 05H               ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
-
-    PREV_TIME       DB  0                 ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED      DB  7H                ;TO CONTROLL THE SPEED OF THE BALL
-
-    BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X    DW  2H
-
-    BALL_COLOR      DB  04H               ;RED COLOR
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Paddle var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle    DW  50d
-    height_Paddle   DW  4d
-
-    Time_Aux        DB  0                 ; variable used when changing if the time is changed
-
-    Paddle_Speed    DW  6
-
-    Paddle_X        DW  135D
-    Paddle_Y        DW  195D
-
-    LeftBoundry     DW  265
-    RightBoundry    DW  6
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Breaks var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;size for each brick
-    BRICK_WIDTH     EQU 35
-    BRICK_HEIGHT    EQU 8
-
-    ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
-    FIRST_COL_POS   EQU 1
-
-    BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS      EQU 4                 ; NUMBER OF ROWS
-
-    STEP_PER_ROW    EQU 40                ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL    EQU 12                ;(BRICK_WIDTH+1PX SPACE)
-
-    COLOR_MATRIX    db  11 dup (1,2,3)    ; EACH Brick must have certain color here
-
-
-    ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW             dw  FIRST_ROW_POS
-    COL             dw  FIRST_COL_POS
-    CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
-
-.CODE
-
-MAIN PROC FAR
-
-                           MOV  AX, @DATA
-                           MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
-
-                           mov  ax, 0A000h                ; Video memory segment for mode 13h
-                           mov  es, ax                    ; Set ES to point to video memory
-                           MOV  AH, 00H
-                           MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
-                           INT  10H
-
-                           CALL CLEARING_SCREEN
-    ; CALL Move_Paddle
-
-    TIME_AGAIN:            MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                           INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
-
-                           MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                           CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
-                           JE   TIME_AGAIN
-
-
-                           MOV  PREV_TIME, DL
-                           CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                           CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                           CALL DRAWING_BALL              ;DRAWING BALL
-
-                           CALL Move_Paddle
-                           CALL Draw_Paddle
-                           CALL MOVING_BALL
-                           CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-                           JMP  TIME_AGAIN
-
-
-                           RET
-MAIN ENDP
-
-
-
-CLEARING_SCREEN PROC
-
-                           MOV  AH, 06H                   ;SCROLL UP
-                           XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                           XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                           MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                           MOV  BH, 00H                   ;BLACK COLOR
-                           INT  10H                       ;CLEAR THE SCREEN
-
-
-                           RET
-CLEARING_SCREEN ENDP
-
-
-MOVING_BALL PROC
-
-                           MOV  AX, BALL_SPEED_Y
-                           SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
-
-                           CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                           JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
-
-                           MOV  AX, MAX_HIGHT
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                           JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
-
-                           MOV  AX, BALL_SPEED_X
-                           ADD  BALL_POSITION_X, AX       ;MOV RIGHT
-
-                           CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                           JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
-
-                           MOV  AX, MAX_WIDTH
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                           JG   REVERSE_X                 ;REVERSE IF GREATER
-
-
-    ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
-
-                           MOV  AX,Paddle_X
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->Start
-                           JB   NOT_COLLIDE
-                           ADD  AX,width_Paddle
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->End
-                           JBE  CHECK_Y
-
-    CHECK_Y:               
-                           MOV  AX,Paddle_Y
-                           SUB  AX,height_Paddle
-                           CMP  AX, BALL_POSITION_Y
-                           JA   NOT_COLLIDE
-                           JMP  REVERSE_Y
-
-
-    NOT_COLLIDE:           
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-    RT:                    RET
-
-    REVERSE_Y:             NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           RET
-
-    REVERSE_X:             NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
-
-                           RET
-MOVING_BALL ENDP
-
-
-
-HANDLE_COLLISION PROC
-    ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-                           MOV  AX,BALL_POSITION_Y
-                           ADD  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   X1
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-    ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
-    X1:                    MOV  AX,BALL_POSITION_Y
-                           SUB  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   .RT
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-.RT: RET
-
-.REVERSE_Y:
-                           NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
-                           RET
-HANDLE_COLLISION ENDP
-
-DESTROY_BRICK PROC
-                           PUSH AX
-                           PUSH BX
-                           PUSH DX
-                           PUSH CX
-                           PUSH DI
-    ;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
-                           MOV  DX,0
-                           MOV  AX,SI
-                           MOV  BX,320
-                           DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
-                           MOV  CX,DX
-                           MOV  DX,0
-                           MOV  BX,STEP_PER_COL
-                           SUB  AX,FIRST_ROW_POS
-                           DIV  BX
-                           MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
-
-                           MOV  DX,0
-                           MOV  AX,CX
-                           SUB  AX,FIRST_COL_POS
-                           MOV  BX,STEP_PER_ROW
-                           DIV  BX
-                           MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
-                           MOV  AX,BP
-                           MOV  BX,BRICKS_PER_ROW
-                           MUL  BX
-                           ADD  AX,CX
-                           MOV  DI,AX
-                           DEC  [COLOR_MATRIX+DI]
-
-                           POP  DI
-                           POP  CX
-                           POP  DX
-                           POP  BX
-                           POP  AX
-                           RET
-DESTROY_BRICK ENDP
-
-
-
-
-DRAWING_BALL PROC
-
-                    
-                           MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                           MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                           MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                           MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
-    DRAW_HORIZONTAL:       INT  10H
-                           INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                           MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                           SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
-                           JL   DRAW_HORIZONTAL
-
-
-                           INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                           MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
-                           MOV  BX, DX
-                           SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE
-                           JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                           RET                            ;ELSE WILL RETURN
-
-DRAWING_BALL ENDP
-
-DRAW_ALL_BRICKS PROC
-                           MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                           MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                           MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
-    DRAWIT:                
-                           CALL DRAWBRICK
-                           ADD  COL,STEP_PER_ROW
-                           INC  CRNT_BRICK
-                           INC  CX
-                           CMP  CX,BRICKS_PER_ROW
-                           JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                           MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
-                           INC  DX
-                           MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
-                           ADD  ROW,STEP_PER_COL
-                           CMP  DX,TOTAL_ROWS
-                           JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                           MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
-                           MOV  COL,FIRST_COL_POS
-                           RET
-DRAW_ALL_BRICKS ENDP
-
-
-
-DRAWBRICK PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-                           mov  ax,ROW                    ;==>column number
-                           mov  bx,320                    ;bx=320
-                           mul  bx                        ;ax=ax*bx
-                           add  ax,COL                    ;ax==>in now target pixel to draw
-                           MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
-                           MOV  DI,CRNT_BRICK
-                           mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                           mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                           mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                  mov  es:[si],bl                ;COLOR THIS PIXEL
-                           inc  si                        ;GO RIGHT
-                           inc  CX
-                           cmp  cx,BRICK_WIDTH
-                           jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                           add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                           sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
-                           INC  DX
-                           MOV  CX,0                      ;RESET COLUMNS COUNTER
-                           CMP  DX,BRICK_HEIGHT
-                           jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           ret
-DRAWBRICK ENDP
-
-Move_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-
-                           MOV  AH, 01h                   ; Function to check if a key is pressed
-                           INT  16h                       ; Call BIOS interrupt
-                           JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
-    ; Code to handle key press
-                           JMP  Done
-
-    NoKey:                 
-                           JMP  rett
-
-    Done:                  
-
-    ; Read the key
-                           MOV  AH, 00h
-                           INT  16h
-           
-    ; Check for left arrow (E0 4B)
-                           CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   left_pressed              ; Jump if Left Arrow
-                  
-    ; Check for right arrow (E0 4D)
-                           CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   right_pressed             ; Jump if Right Arrow
-                   
-                           JMP  rett                      ; Return to polling
-                        
-    left_pressed:          
-                   
-    ; Check for the boundries
-                           MOV  BX,Paddle_Speed
-                           SUB  Paddle_X,BX
-                           MOV  AX,RightBoundry
-                           CMP  Paddle_X,AX
-                           JB   Maintain_Right_Boundry
-                           JMP  rett                      ; Return to polling
-                   
-    right_pressed:         
-                           MOV  BX,Paddle_Speed
-                           ADD  Paddle_X,BX
-                           MOV  AX,LeftBoundry
-                           CMP  Paddle_X,AX
-                           JA   Maintain_Left_Boundry
-                           JMP  rett                      ; Return to polling
-     
-     	                 
-    Maintain_Right_Boundry:
-                           MOV  AX,RightBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-	                   
-    Maintain_Left_Boundry: 
-                           MOV  AX,LeftBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-
-
-    rett:                  
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           RET
-
-Move_Paddle endp
+                              MOV  AH,0CH
+                              MOV  AL,0fH
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              INC  DX
+                              MOV  AX, PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              SUB  AX, 5
+                              CMP  DX,AX
+                              JB   loopUp2_
+                            
+                            
+                            
+   
+                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerUpWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              ADD  DX,4
     
-    
-                  
-           
-Draw_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-               
-    ;                        MOV  CX,0
-    ;                        MOV  DX,Paddle_Y
-	                 
-	                 
-    ; clear_The_Screen_hori:
-	                 
-    ;                        MOV  AX,320
-    ; clear_The_Screen_ver:
-    ; ; AL = Color, BH = Page Number, CX = x, DX = y
-    ;                        PUSH AX
-    ;                        MOV  AH,0CH
-    ;                        MOV  AL,00H
-    ;                        MOV  BH,00
-    ;                        INT  10h
-    ;                        INC  CX
-    ;                        POP  AX
-    ;                        DEC  AX
-    ;                        JNZ  clear_The_Screen_ver
-    ;                        MOV  CX,0
-    ;                        INC  DX
-    ;                        CMP  DX,199
-    ;                        JNZ  clear_The_Screen_hori
-	                 
-    ; the coordinates of the paddle
-	                 
-                           MOV  CX,Paddle_X
-                           MOV  DX,Paddle_Y
-	                 	                 
-		
-    draw_Paddle_hori:      
-                           MOV  BX,width_Paddle
-	                 
- 	
-    draw_Paddle_ver:       
+    loopUpInv2_:                                             ; Draw the second line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
-                           MOV  AH,0CH
-                           MOV  AL,07H
-                           PUSH BX
-                           MOV  BH,00
-                           INT  10h
-                           INC  CX
-                           POP  BX
-                           DEC  BL
-                           JNZ  draw_Paddle_ver
-                           MOV  CX,Paddle_X
-                           INC  DX
-                           CMP  DX,199
-                           JNZ  draw_Paddle_hori
-	    
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
+                              MOV  AH,0CH
+                              MOV  AL,0fH
+                              MOV  BH,00
+                              INT  10h
+                              DEC  CX
+                              INC  DX
+                              MOV  AX, PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              SUB  AX, 5
+                              CMP  DX,AX
+                              JB   loopUpInv2_
                            
-                           RET
-Draw_Paddle endp
-
-
-
-end main.MODEL SMALL
-.STACK 4000
-.DATA
-
-    MAX_WIDTH       DW  140H              ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT       DW  0C8H              ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
-
-    BALL_POSITION_X DW  0A0H              ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y DW  64H               ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE       EQU 05H               ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
-
-    PREV_TIME       DB  0                 ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED      DB  7H                ;TO CONTROLL THE SPEED OF THE BALL
-
-    BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X    DW  2H
-
-    BALL_COLOR      DB  04H               ;RED COLOR
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Paddle var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle    DW  50d
-    height_Paddle   DW  4d
-
-    Time_Aux        DB  0                 ; variable used when changing if the time is changed
-
-    Paddle_Speed    DW  6
-
-    Paddle_X        DW  135D
-    Paddle_Y        DW  195D
-
-    LeftBoundry     DW  265
-    RightBoundry    DW  6
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Breaks var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;size for each brick
-    BRICK_WIDTH     EQU 35
-    BRICK_HEIGHT    EQU 8
-
-    ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
-    FIRST_COL_POS   EQU 1
-
-    BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS      EQU 4                 ; NUMBER OF ROWS
-
-    STEP_PER_ROW    EQU 40                ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL    EQU 12                ;(BRICK_WIDTH+1PX SPACE)
-
-    COLOR_MATRIX    db  11 dup (1,2,3)    ; EACH Brick must have certain color here
-
-
-    ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW             dw  FIRST_ROW_POS
-    COL             dw  FIRST_COL_POS
-    CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
-
-.CODE
-
-MAIN PROC FAR
-
-                           MOV  AX, @DATA
-                           MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
-
-                           mov  ax, 0A000h                ; Video memory segment for mode 13h
-                           mov  es, ax                    ; Set ES to point to video memory
-                           MOV  AH, 00H
-                           MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
-                           INT  10H
-
-                           CALL CLEARING_SCREEN
-    ; CALL Move_Paddle
-
-    TIME_AGAIN:            MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                           INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
-
-                           MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                           CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
-                           JE   TIME_AGAIN
-
-
-                           MOV  PREV_TIME, DL
-                           CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                           CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                           CALL DRAWING_BALL              ;DRAWING BALL
-
-                           CALL Move_Paddle
-                           CALL Draw_Paddle
-                           CALL MOVING_BALL
-                           CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-                           JMP  TIME_AGAIN
-
-
-                           RET
-MAIN ENDP
-
-
-
-CLEARING_SCREEN PROC
-
-                           MOV  AH, 06H                   ;SCROLL UP
-                           XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                           XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                           MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                           MOV  BH, 00H                   ;BLACK COLOR
-                           INT  10H                       ;CLEAR THE SCREEN
-
-
-                           RET
-CLEARING_SCREEN ENDP
-
-
-MOVING_BALL PROC
-
-                           MOV  AX, BALL_SPEED_Y
-                           SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
-
-                           CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                           JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
-
-                           MOV  AX, MAX_HIGHT
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                           JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
-
-                           MOV  AX, BALL_SPEED_X
-                           ADD  BALL_POSITION_X, AX       ;MOV RIGHT
-
-                           CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                           JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
-
-                           MOV  AX, MAX_WIDTH
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                           JG   REVERSE_X                 ;REVERSE IF GREATER
-
-
-    ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
-
-                           MOV  AX,Paddle_X
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->Start
-                           JB   NOT_COLLIDE
-                           ADD  AX,width_Paddle
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->End
-                           JBE  CHECK_Y
-
-    CHECK_Y:               
-                           MOV  AX,Paddle_Y
-                           SUB  AX,height_Paddle
-                           CMP  AX, BALL_POSITION_Y
-                           JA   NOT_COLLIDE
-                           JMP  REVERSE_Y
-
-
-    NOT_COLLIDE:           
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-    RT:                    RET
-
-    REVERSE_Y:             NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           RET
-
-    REVERSE_X:             NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
-
-                           RET
-MOVING_BALL ENDP
-
-
-
-HANDLE_COLLISION PROC
-    ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-                           MOV  AX,BALL_POSITION_Y
-                           ADD  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   X1
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-    ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
-    X1:                    MOV  AX,BALL_POSITION_Y
-                           SUB  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   .RT
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-.RT: RET
-
-.REVERSE_Y:
-                           NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
-                           RET
-HANDLE_COLLISION ENDP
-
-DESTROY_BRICK PROC
-                           PUSH AX
-                           PUSH BX
-                           PUSH DX
-                           PUSH CX
-                           PUSH DI
-    ;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
-                           MOV  DX,0
-                           MOV  AX,SI
-                           MOV  BX,320
-                           DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
-                           MOV  CX,DX
-                           MOV  DX,0
-                           MOV  BX,STEP_PER_COL
-                           SUB  AX,FIRST_ROW_POS
-                           DIV  BX
-                           MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
-
-                           MOV  DX,0
-                           MOV  AX,CX
-                           SUB  AX,FIRST_COL_POS
-                           MOV  BX,STEP_PER_ROW
-                           DIV  BX
-                           MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
-                           MOV  AX,BP
-                           MOV  BX,BRICKS_PER_ROW
-                           MUL  BX
-                           ADD  AX,CX
-                           MOV  DI,AX
-                           DEC  [COLOR_MATRIX+DI]
-
-                           POP  DI
-                           POP  CX
-                           POP  DX
-                           POP  BX
-                           POP  AX
-                           RET
-DESTROY_BRICK ENDP
-
-
-
-
-DRAWING_BALL PROC
-
-                    
-                           MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                           MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                           MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                           MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
-    DRAW_HORIZONTAL:       INT  10H
-                           INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                           MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                           SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
-                           JL   DRAW_HORIZONTAL
-
-
-                           INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                           MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
-                           MOV  BX, DX
-                           SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE
-                           JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                           RET                            ;ELSE WILL RETURN
-
-DRAWING_BALL ENDP
-
-DRAW_ALL_BRICKS PROC
-                           MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                           MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                           MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
-    DRAWIT:                
-                           CALL DRAWBRICK
-                           ADD  COL,STEP_PER_ROW
-                           INC  CRNT_BRICK
-                           INC  CX
-                           CMP  CX,BRICKS_PER_ROW
-                           JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                           MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
-                           INC  DX
-                           MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
-                           ADD  ROW,STEP_PER_COL
-                           CMP  DX,TOTAL_ROWS
-                           JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                           MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
-                           MOV  COL,FIRST_COL_POS
-                           RET
-DRAW_ALL_BRICKS ENDP
-
-
-
-DRAWBRICK PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-                           mov  ax,ROW                    ;==>column number
-                           mov  bx,320                    ;bx=320
-                           mul  bx                        ;ax=ax*bx
-                           add  ax,COL                    ;ax==>in now target pixel to draw
-                           MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
-                           MOV  DI,CRNT_BRICK
-                           mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                           mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                           mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                  mov  es:[si],bl                ;COLOR THIS PIXEL
-                           inc  si                        ;GO RIGHT
-                           inc  CX
-                           cmp  cx,BRICK_WIDTH
-                           jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                           add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                           sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
-                           INC  DX
-                           MOV  CX,0                      ;RESET COLUMNS COUNTER
-                           CMP  DX,BRICK_HEIGHT
-                           jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           ret
-DRAWBRICK ENDP
-
-Move_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-
-                           MOV  AH, 01h                   ; Function to check if a key is pressed
-                           INT  16h                       ; Call BIOS interrupt
-                           JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
-    ; Code to handle key press
-                           JMP  Done
-
-    NoKey:                 
-                           JMP  rett
-
-    Done:                  
-
-    ; Read the key
-                           MOV  AH, 00h
-                           INT  16h
-           
-    ; Check for left arrow (E0 4B)
-                           CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   left_pressed              ; Jump if Left Arrow
-                  
-    ; Check for right arrow (E0 4D)
-                           CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   right_pressed             ; Jump if Right Arrow
-                   
-                           JMP  rett                      ; Return to polling
-                        
-    left_pressed:          
-                   
-    ; Check for the boundries
-                           MOV  BX,Paddle_Speed
-                           SUB  Paddle_X,BX
-                           MOV  AX,RightBoundry
-                           CMP  Paddle_X,AX
-                           JB   Maintain_Right_Boundry
-                           JMP  rett                      ; Return to polling
-                   
-    right_pressed:         
-                           MOV  BX,Paddle_Speed
-                           ADD  Paddle_X,BX
-                           MOV  AX,LeftBoundry
-                           CMP  Paddle_X,AX
-                           JA   Maintain_Left_Boundry
-                           JMP  rett                      ; Return to polling
-     
-     	                 
-    Maintain_Right_Boundry:
-                           MOV  AX,RightBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-	                   
-    Maintain_Left_Boundry: 
-                           MOV  AX,LeftBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-
-
-    rett:                  
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           RET
-
-Move_Paddle endp
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+        
+                              RET
+DRAW_UP_ARROW ENDP
+  
+ 
+DRAW_DOWN_ARROW PROC
     
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
     
-                  
-           
-Draw_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-               
-    ;                        MOV  CX,0
-    ;                        MOV  DX,Paddle_Y
-	                 
-	                 
-    ; clear_The_Screen_hori:
-	                 
-    ;                        MOV  AX,320
-    ; clear_The_Screen_ver:
-    ; ; AL = Color, BH = Page Number, CX = x, DX = y
-    ;                        PUSH AX
-    ;                        MOV  AH,0CH
-    ;                        MOV  AL,00H
-    ;                        MOV  BH,00
-    ;                        INT  10h
-    ;                        INC  CX
-    ;                        POP  AX
-    ;                        DEC  AX
-    ;                        JNZ  clear_The_Screen_ver
-    ;                        MOV  CX,0
-    ;                        INC  DX
-    ;                        CMP  DX,199
-    ;                        JNZ  clear_The_Screen_hori
-	                 
-    ; the coordinates of the paddle
-	                 
-                           MOV  CX,Paddle_X
-                           MOV  DX,Paddle_Y
-	                 	                 
-		
-    draw_Paddle_hori:      
-                           MOV  BX,width_Paddle
-	                 
- 	
-    draw_Paddle_ver:       
+                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerDownHeight
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  AX,PowerDownHeight
+                              SUB  AX,2
+                              ADD  DX,AX
+    
+    loopDown_:                                               ; Draw the first line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
-                           MOV  AH,0CH
-                           MOV  AL,07H
-                           PUSH BX
-                           MOV  BH,00
-                           INT  10h
-                           INC  CX
-                           POP  BX
-                           DEC  BL
-                           JNZ  draw_Paddle_ver
-                           MOV  CX,Paddle_X
-                           INC  DX
-                           CMP  DX,199
-                           JNZ  draw_Paddle_hori
-	    
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           
-                           RET
-Draw_Paddle endp
-
-
-
-end main.MODEL SMALL
-.STACK 4000
-.DATA
-
-    MAX_WIDTH       DW  140H              ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT       DW  0C8H              ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
-
-    BALL_POSITION_X DW  0A0H              ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y DW  64H               ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE       EQU 05H               ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
-
-    PREV_TIME       DB  0                 ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED      DB  7H                ;TO CONTROLL THE SPEED OF THE BALL
-
-    BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X    DW  2H
-
-    BALL_COLOR      DB  04H               ;RED COLOR
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Paddle var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle    DW  50d
-    height_Paddle   DW  4d
-
-    Time_Aux        DB  0                 ; variable used when changing if the time is changed
-
-    Paddle_Speed    DW  6
-
-    Paddle_X        DW  135D
-    Paddle_Y        DW  195D
-
-    LeftBoundry     DW  265
-    RightBoundry    DW  6
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Breaks var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;size for each brick
-    BRICK_WIDTH     EQU 35
-    BRICK_HEIGHT    EQU 8
-
-    ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
-    FIRST_COL_POS   EQU 1
-
-    BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS      EQU 4                 ; NUMBER OF ROWS
-
-    STEP_PER_ROW    EQU 40                ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL    EQU 12                ;(BRICK_WIDTH+1PX SPACE)
-
-    COLOR_MATRIX    db  11 dup (1,2,3)    ; EACH Brick must have certain color here
-
-
-    ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW             dw  FIRST_ROW_POS
-    COL             dw  FIRST_COL_POS
-    CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
-
-.CODE
-
-MAIN PROC FAR
-
-                           MOV  AX, @DATA
-                           MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
-
-                           mov  ax, 0A000h                ; Video memory segment for mode 13h
-                           mov  es, ax                    ; Set ES to point to video memory
-                           MOV  AH, 00H
-                           MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
-                           INT  10H
-
-                           CALL CLEARING_SCREEN
-    ; CALL Move_Paddle
-
-    TIME_AGAIN:            MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                           INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
-
-                           MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                           CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
-                           JE   TIME_AGAIN
-
-
-                           MOV  PREV_TIME, DL
-                           CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                           CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                           CALL DRAWING_BALL              ;DRAWING BALL
-
-                           CALL Move_Paddle
-                           CALL Draw_Paddle
-                           CALL MOVING_BALL
-                           CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-                           JMP  TIME_AGAIN
-
-
-                           RET
-MAIN ENDP
-
-
-
-CLEARING_SCREEN PROC
-
-                           MOV  AH, 06H                   ;SCROLL UP
-                           XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                           XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                           MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                           MOV  BH, 00H                   ;BLACK COLOR
-                           INT  10H                       ;CLEAR THE SCREEN
-
-
-                           RET
-CLEARING_SCREEN ENDP
-
-
-MOVING_BALL PROC
-
-                           MOV  AX, BALL_SPEED_Y
-                           SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
-
-                           CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                           JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
-
-                           MOV  AX, MAX_HIGHT
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                           JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
-
-                           MOV  AX, BALL_SPEED_X
-                           ADD  BALL_POSITION_X, AX       ;MOV RIGHT
-
-                           CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                           JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
-
-                           MOV  AX, MAX_WIDTH
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                           JG   REVERSE_X                 ;REVERSE IF GREATER
-
-
-    ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
-
-                           MOV  AX,Paddle_X
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->Start
-                           JB   NOT_COLLIDE
-                           ADD  AX,width_Paddle
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->End
-                           JBE  CHECK_Y
-
-    CHECK_Y:               
-                           MOV  AX,Paddle_Y
-                           SUB  AX,height_Paddle
-                           CMP  AX, BALL_POSITION_Y
-                           JA   NOT_COLLIDE
-                           JMP  REVERSE_Y
-
-
-    NOT_COLLIDE:           
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-    RT:                    RET
-
-    REVERSE_Y:             NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           RET
-
-    REVERSE_X:             NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
-
-                           RET
-MOVING_BALL ENDP
-
-
-
-HANDLE_COLLISION PROC
-    ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-                           MOV  AX,BALL_POSITION_Y
-                           ADD  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   X1
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-    ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
-    X1:                    MOV  AX,BALL_POSITION_Y
-                           SUB  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   .RT
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-.RT: RET
-
-.REVERSE_Y:
-                           NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
-                           RET
-HANDLE_COLLISION ENDP
-
-DESTROY_BRICK PROC
-                           PUSH AX
-                           PUSH BX
-                           PUSH DX
-                           PUSH CX
-                           PUSH DI
-    ;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
-                           MOV  DX,0
-                           MOV  AX,SI
-                           MOV  BX,320
-                           DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
-                           MOV  CX,DX
-                           MOV  DX,0
-                           MOV  BX,STEP_PER_COL
-                           SUB  AX,FIRST_ROW_POS
-                           DIV  BX
-                           MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
-
-                           MOV  DX,0
-                           MOV  AX,CX
-                           SUB  AX,FIRST_COL_POS
-                           MOV  BX,STEP_PER_ROW
-                           DIV  BX
-                           MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
-                           MOV  AX,BP
-                           MOV  BX,BRICKS_PER_ROW
-                           MUL  BX
-                           ADD  AX,CX
-                           MOV  DI,AX
-                           DEC  [COLOR_MATRIX+DI]
-
-                           POP  DI
-                           POP  CX
-                           POP  DX
-                           POP  BX
-                           POP  AX
-                           RET
-DESTROY_BRICK ENDP
-
-
-
-
-DRAWING_BALL PROC
-
-                    
-                           MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                           MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                           MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                           MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
-    DRAW_HORIZONTAL:       INT  10H
-                           INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                           MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                           SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
-                           JL   DRAW_HORIZONTAL
-
-
-                           INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                           MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
-                           MOV  BX, DX
-                           SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE
-                           JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                           RET                            ;ELSE WILL RETURN
-
-DRAWING_BALL ENDP
-
-DRAW_ALL_BRICKS PROC
-                           MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                           MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                           MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
-    DRAWIT:                
-                           CALL DRAWBRICK
-                           ADD  COL,STEP_PER_ROW
-                           INC  CRNT_BRICK
-                           INC  CX
-                           CMP  CX,BRICKS_PER_ROW
-                           JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                           MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
-                           INC  DX
-                           MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
-                           ADD  ROW,STEP_PER_COL
-                           CMP  DX,TOTAL_ROWS
-                           JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                           MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
-                           MOV  COL,FIRST_COL_POS
-                           RET
-DRAW_ALL_BRICKS ENDP
-
-
-
-DRAWBRICK PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-                           mov  ax,ROW                    ;==>column number
-                           mov  bx,320                    ;bx=320
-                           mul  bx                        ;ax=ax*bx
-                           add  ax,COL                    ;ax==>in now target pixel to draw
-                           MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
-                           MOV  DI,CRNT_BRICK
-                           mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                           mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                           mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                  mov  es:[si],bl                ;COLOR THIS PIXEL
-                           inc  si                        ;GO RIGHT
-                           inc  CX
-                           cmp  cx,BRICK_WIDTH
-                           jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                           add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                           sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
-                           INC  DX
-                           MOV  CX,0                      ;RESET COLUMNS COUNTER
-                           CMP  DX,BRICK_HEIGHT
-                           jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           ret
-DRAWBRICK ENDP
-
-Move_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-
-                           MOV  AH, 01h                   ; Function to check if a key is pressed
-                           INT  16h                       ; Call BIOS interrupt
-                           JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
-    ; Code to handle key press
-                           JMP  Done
-
-    NoKey:                 
-                           JMP  rett
-
-    Done:                  
-
-    ; Read the key
-                           MOV  AH, 00h
-                           INT  16h
-           
-    ; Check for left arrow (E0 4B)
-                           CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   left_pressed              ; Jump if Left Arrow
-                  
-    ; Check for right arrow (E0 4D)
-                           CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   right_pressed             ; Jump if Right Arrow
-                   
-                           JMP  rett                      ; Return to polling
-                        
-    left_pressed:          
-                   
-    ; Check for the boundries
-                           MOV  BX,Paddle_Speed
-                           SUB  Paddle_X,BX
-                           MOV  AX,RightBoundry
-                           CMP  Paddle_X,AX
-                           JB   Maintain_Right_Boundry
-                           JMP  rett                      ; Return to polling
-                   
-    right_pressed:         
-                           MOV  BX,Paddle_Speed
-                           ADD  Paddle_X,BX
-                           MOV  AX,LeftBoundry
-                           CMP  Paddle_X,AX
-                           JA   Maintain_Left_Boundry
-                           JMP  rett                      ; Return to polling
-     
-     	                 
-    Maintain_Right_Boundry:
-                           MOV  AX,RightBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-	                   
-    Maintain_Left_Boundry: 
-                           MOV  AX,LeftBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-
-
-    rett:                  
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           RET
-
-Move_Paddle endp
+                              MOV  AH,0CH
+                              MOV  AL,0fH
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              DEC  DX
+                              MOV  AX, PowerDown_Y
+                              ADD  AX, 3
+                              CMP  DX,AX
+                              JG   loopDown_
+                            
+                            
+                            
+                            
+                            
+                            
+                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerDownWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  AX,PowerDownHeight
+                              SUB  AX,2
+                              ADD  DX,AX
     
-    
-                  
-           
-Draw_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-               
-    ;                        MOV  CX,0
-    ;                        MOV  DX,Paddle_Y
-	                 
-	                 
-    ; clear_The_Screen_hori:
-	                 
-    ;                        MOV  AX,320
-    ; clear_The_Screen_ver:
-    ; ; AL = Color, BH = Page Number, CX = x, DX = y
-    ;                        PUSH AX
-    ;                        MOV  AH,0CH
-    ;                        MOV  AL,00H
-    ;                        MOV  BH,00
-    ;                        INT  10h
-    ;                        INC  CX
-    ;                        POP  AX
-    ;                        DEC  AX
-    ;                        JNZ  clear_The_Screen_ver
-    ;                        MOV  CX,0
-    ;                        INC  DX
-    ;                        CMP  DX,199
-    ;                        JNZ  clear_The_Screen_hori
-	                 
-    ; the coordinates of the paddle
-	                 
-                           MOV  CX,Paddle_X
-                           MOV  DX,Paddle_Y
-	                 	                 
-		
-    draw_Paddle_hori:      
-                           MOV  BX,width_Paddle
-	                 
- 	
-    draw_Paddle_ver:       
+    loopDownInv_:                                            ; Draw the second line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
-                           MOV  AH,0CH
-                           MOV  AL,07H
-                           PUSH BX
-                           MOV  BH,00
-                           INT  10h
-                           INC  CX
-                           POP  BX
-                           DEC  BL
-                           JNZ  draw_Paddle_ver
-                           MOV  CX,Paddle_X
-                           INC  DX
-                           CMP  DX,199
-                           JNZ  draw_Paddle_hori
-	    
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
+                              MOV  AH,0CH
+                              MOV  AL,0fH
+                              MOV  BH,00
+                              INT  10h
+                              DEC  CX
+                              DEC  DX
+                              MOV  AX, PowerDown_Y
+                              ADD  AX, 3
+                              CMP  DX,AX
+                              JG   loopDownInv_
+                     
+              
+                 
+                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerDownWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  AX,PowerDownHeight
+                              SUB  AX,4
+                              ADD  DX,AX
+                     
                            
-                           RET
-Draw_Paddle endp
-
-
-
-end main.MODEL SMALL
-.STACK 4000
-.DATA
-
-    MAX_WIDTH       DW  140H              ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT       DW  0C8H              ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
-
-    BALL_POSITION_X DW  0A0H              ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y DW  64H               ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE       EQU 05H               ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
-
-    PREV_TIME       DB  0                 ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED      DB  7H                ;TO CONTROLL THE SPEED OF THE BALL
-
-    BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X    DW  2H
-
-    BALL_COLOR      DB  04H               ;RED COLOR
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Paddle var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle    DW  50d
-    height_Paddle   DW  4d
-
-    Time_Aux        DB  0                 ; variable used when changing if the time is changed
-
-    Paddle_Speed    DW  6
-
-    Paddle_X        DW  135D
-    Paddle_Y        DW  195D
-
-    LeftBoundry     DW  265
-    RightBoundry    DW  6
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Breaks var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;size for each brick
-    BRICK_WIDTH     EQU 35
-    BRICK_HEIGHT    EQU 8
-
-    ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
-    FIRST_COL_POS   EQU 1
-
-    BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS      EQU 4                 ; NUMBER OF ROWS
-
-    STEP_PER_ROW    EQU 40                ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL    EQU 12                ;(BRICK_WIDTH+1PX SPACE)
-
-    COLOR_MATRIX    db  11 dup (1,2,3)    ; EACH Brick must have certain color here
-
-
-    ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW             dw  FIRST_ROW_POS
-    COL             dw  FIRST_COL_POS
-    CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
-
-.CODE
-
-MAIN PROC FAR
-
-                           MOV  AX, @DATA
-                           MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
-
-                           mov  ax, 0A000h                ; Video memory segment for mode 13h
-                           mov  es, ax                    ; Set ES to point to video memory
-                           MOV  AH, 00H
-                           MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
-                           INT  10H
-
-                           CALL CLEARING_SCREEN
-    ; CALL Move_Paddle
-
-    TIME_AGAIN:            MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                           INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
-
-                           MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                           CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
-                           JE   TIME_AGAIN
-
-
-                           MOV  PREV_TIME, DL
-                           CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                           CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                           CALL DRAWING_BALL              ;DRAWING BALL
-
-                           CALL Move_Paddle
-                           CALL Draw_Paddle
-                           CALL MOVING_BALL
-                           CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-                           JMP  TIME_AGAIN
-
-
-                           RET
-MAIN ENDP
-
-
-
-CLEARING_SCREEN PROC
-
-                           MOV  AH, 06H                   ;SCROLL UP
-                           XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                           XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                           MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                           MOV  BH, 00H                   ;BLACK COLOR
-                           INT  10H                       ;CLEAR THE SCREEN
-
-
-                           RET
-CLEARING_SCREEN ENDP
-
-
-MOVING_BALL PROC
-
-                           MOV  AX, BALL_SPEED_Y
-                           SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
-
-                           CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                           JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
-
-                           MOV  AX, MAX_HIGHT
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                           JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
-
-                           MOV  AX, BALL_SPEED_X
-                           ADD  BALL_POSITION_X, AX       ;MOV RIGHT
-
-                           CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                           JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
-
-                           MOV  AX, MAX_WIDTH
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                           JG   REVERSE_X                 ;REVERSE IF GREATER
-
-
-    ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
-
-                           MOV  AX,Paddle_X
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->Start
-                           JB   NOT_COLLIDE
-                           ADD  AX,width_Paddle
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->End
-                           JBE  CHECK_Y
-
-    CHECK_Y:               
-                           MOV  AX,Paddle_Y
-                           SUB  AX,height_Paddle
-                           CMP  AX, BALL_POSITION_Y
-                           JA   NOT_COLLIDE
-                           JMP  REVERSE_Y
-
-
-    NOT_COLLIDE:           
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-    RT:                    RET
-
-    REVERSE_Y:             NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           RET
-
-    REVERSE_X:             NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
-
-                           RET
-MOVING_BALL ENDP
-
-
-
-HANDLE_COLLISION PROC
-    ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-                           MOV  AX,BALL_POSITION_Y
-                           ADD  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   X1
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-    ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
-    X1:                    MOV  AX,BALL_POSITION_Y
-                           SUB  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   .RT
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-.RT: RET
-
-.REVERSE_Y:
-                           NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
-                           RET
-HANDLE_COLLISION ENDP
-
-DESTROY_BRICK PROC
-                           PUSH AX
-                           PUSH BX
-                           PUSH DX
-                           PUSH CX
-                           PUSH DI
-    ;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
-                           MOV  DX,0
-                           MOV  AX,SI
-                           MOV  BX,320
-                           DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
-                           MOV  CX,DX
-                           MOV  DX,0
-                           MOV  BX,STEP_PER_COL
-                           SUB  AX,FIRST_ROW_POS
-                           DIV  BX
-                           MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
-
-                           MOV  DX,0
-                           MOV  AX,CX
-                           SUB  AX,FIRST_COL_POS
-                           MOV  BX,STEP_PER_ROW
-                           DIV  BX
-                           MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
-                           MOV  AX,BP
-                           MOV  BX,BRICKS_PER_ROW
-                           MUL  BX
-                           ADD  AX,CX
-                           MOV  DI,AX
-                           DEC  [COLOR_MATRIX+DI]
-
-                           POP  DI
-                           POP  CX
-                           POP  DX
-                           POP  BX
-                           POP  AX
-                           RET
-DESTROY_BRICK ENDP
-
-
-
-
-DRAWING_BALL PROC
-
-                    
-                           MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                           MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                           MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                           MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
-    DRAW_HORIZONTAL:       INT  10H
-                           INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                           MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                           SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
-                           JL   DRAW_HORIZONTAL
-
-
-                           INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                           MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
-                           MOV  BX, DX
-                           SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE
-                           JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                           RET                            ;ELSE WILL RETURN
-
-DRAWING_BALL ENDP
-
-DRAW_ALL_BRICKS PROC
-                           MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                           MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                           MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
-    DRAWIT:                
-                           CALL DRAWBRICK
-                           ADD  COL,STEP_PER_ROW
-                           INC  CRNT_BRICK
-                           INC  CX
-                           CMP  CX,BRICKS_PER_ROW
-                           JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                           MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
-                           INC  DX
-                           MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
-                           ADD  ROW,STEP_PER_COL
-                           CMP  DX,TOTAL_ROWS
-                           JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                           MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
-                           MOV  COL,FIRST_COL_POS
-                           RET
-DRAW_ALL_BRICKS ENDP
-
-
-
-DRAWBRICK PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-                           mov  ax,ROW                    ;==>column number
-                           mov  bx,320                    ;bx=320
-                           mul  bx                        ;ax=ax*bx
-                           add  ax,COL                    ;ax==>in now target pixel to draw
-                           MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
-                           MOV  DI,CRNT_BRICK
-                           mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                           mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                           mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                  mov  es:[si],bl                ;COLOR THIS PIXEL
-                           inc  si                        ;GO RIGHT
-                           inc  CX
-                           cmp  cx,BRICK_WIDTH
-                           jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                           add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                           sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
-                           INC  DX
-                           MOV  CX,0                      ;RESET COLUMNS COUNTER
-                           CMP  DX,BRICK_HEIGHT
-                           jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           ret
-DRAWBRICK ENDP
-
-Move_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-
-                           MOV  AH, 01h                   ; Function to check if a key is pressed
-                           INT  16h                       ; Call BIOS interrupt
-                           JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
-    ; Code to handle key press
-                           JMP  Done
-
-    NoKey:                 
-                           JMP  rett
-
-    Done:                  
-
-    ; Read the key
-                           MOV  AH, 00h
-                           INT  16h
-           
-    ; Check for left arrow (E0 4B)
-                           CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   left_pressed              ; Jump if Left Arrow
-                  
-    ; Check for right arrow (E0 4D)
-                           CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   right_pressed             ; Jump if Right Arrow
-                   
-                           JMP  rett                      ; Return to polling
-                        
-    left_pressed:          
-                   
-    ; Check for the boundries
-                           MOV  BX,Paddle_Speed
-                           SUB  Paddle_X,BX
-                           MOV  AX,RightBoundry
-                           CMP  Paddle_X,AX
-                           JB   Maintain_Right_Boundry
-                           JMP  rett                      ; Return to polling
-                   
-    right_pressed:         
-                           MOV  BX,Paddle_Speed
-                           ADD  Paddle_X,BX
-                           MOV  AX,LeftBoundry
-                           CMP  Paddle_X,AX
-                           JA   Maintain_Left_Boundry
-                           JMP  rett                      ; Return to polling
-     
-     	                 
-    Maintain_Right_Boundry:
-                           MOV  AX,RightBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-	                   
-    Maintain_Left_Boundry: 
-                           MOV  AX,LeftBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-
-
-    rett:                  
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           RET
-
-Move_Paddle endp
-    
-    
-                  
-           
-Draw_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-               
-    ;                        MOV  CX,0
-    ;                        MOV  DX,Paddle_Y
-	                 
-	                 
-    ; clear_The_Screen_hori:
-	                 
-    ;                        MOV  AX,320
-    ; clear_The_Screen_ver:
-    ; ; AL = Color, BH = Page Number, CX = x, DX = y
-    ;                        PUSH AX
-    ;                        MOV  AH,0CH
-    ;                        MOV  AL,00H
-    ;                        MOV  BH,00
-    ;                        INT  10h
-    ;                        INC  CX
-    ;                        POP  AX
-    ;                        DEC  AX
-    ;                        JNZ  clear_The_Screen_ver
-    ;                        MOV  CX,0
-    ;                        INC  DX
-    ;                        CMP  DX,199
-    ;                        JNZ  clear_The_Screen_hori
-	                 
-    ; the coordinates of the paddle
-	                 
-                           MOV  CX,Paddle_X
-                           MOV  DX,Paddle_Y
-	                 	                 
-		
-    draw_Paddle_hori:      
-                           MOV  BX,width_Paddle
-	                 
- 	
-    draw_Paddle_ver:       
+                           
+    loopDown2_:                                              ; Draw the first line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
-                           MOV  AH,0CH
-                           MOV  AL,07H
-                           PUSH BX
-                           MOV  BH,00
-                           INT  10h
-                           INC  CX
-                           POP  BX
-                           DEC  BL
-                           JNZ  draw_Paddle_ver
-                           MOV  CX,Paddle_X
-                           INC  DX
-                           CMP  DX,199
-                           JNZ  draw_Paddle_hori
-	    
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           
-                           RET
-Draw_Paddle endp
-
-
-
-end main.MODEL SMALL
-.STACK 4000
-.DATA
-
-    MAX_WIDTH       DW  140H              ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT       DW  0C8H              ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
-
-    BALL_POSITION_X DW  0A0H              ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y DW  64H               ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE       EQU 05H               ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
-
-    PREV_TIME       DB  0                 ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED      DB  7H                ;TO CONTROLL THE SPEED OF THE BALL
-
-    BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X    DW  2H
-
-    BALL_COLOR      DB  04H               ;RED COLOR
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Paddle var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle    DW  50d
-    height_Paddle   DW  4d
-
-    Time_Aux        DB  0                 ; variable used when changing if the time is changed
-
-    Paddle_Speed    DW  6
-
-    Paddle_X        DW  135D
-    Paddle_Y        DW  195D
-
-    LeftBoundry     DW  265
-    RightBoundry    DW  6
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Breaks var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;size for each brick
-    BRICK_WIDTH     EQU 35
-    BRICK_HEIGHT    EQU 8
-
-    ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
-    FIRST_COL_POS   EQU 1
-
-    BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS      EQU 4                 ; NUMBER OF ROWS
-
-    STEP_PER_ROW    EQU 40                ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL    EQU 12                ;(BRICK_WIDTH+1PX SPACE)
-
-    COLOR_MATRIX    db  11 dup (1,2,3)    ; EACH Brick must have certain color here
-
-
-    ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW             dw  FIRST_ROW_POS
-    COL             dw  FIRST_COL_POS
-    CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
-
-.CODE
-
-MAIN PROC FAR
-
-                           MOV  AX, @DATA
-                           MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
-
-                           mov  ax, 0A000h                ; Video memory segment for mode 13h
-                           mov  es, ax                    ; Set ES to point to video memory
-                           MOV  AH, 00H
-                           MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
-                           INT  10H
-
-                           CALL CLEARING_SCREEN
-    ; CALL Move_Paddle
-
-    TIME_AGAIN:            MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                           INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
-
-                           MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                           CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
-                           JE   TIME_AGAIN
-
-
-                           MOV  PREV_TIME, DL
-                           CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                           CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                           CALL DRAWING_BALL              ;DRAWING BALL
-
-                           CALL Move_Paddle
-                           CALL Draw_Paddle
-                           CALL MOVING_BALL
-                           CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-                           JMP  TIME_AGAIN
-
-
-                           RET
-MAIN ENDP
-
-
-
-CLEARING_SCREEN PROC
-
-                           MOV  AH, 06H                   ;SCROLL UP
-                           XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                           XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                           MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                           MOV  BH, 00H                   ;BLACK COLOR
-                           INT  10H                       ;CLEAR THE SCREEN
-
-
-                           RET
-CLEARING_SCREEN ENDP
-
-
-MOVING_BALL PROC
-
-                           MOV  AX, BALL_SPEED_Y
-                           SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
-
-                           CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                           JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
-
-                           MOV  AX, MAX_HIGHT
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                           JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
-
-                           MOV  AX, BALL_SPEED_X
-                           ADD  BALL_POSITION_X, AX       ;MOV RIGHT
-
-                           CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                           JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
-
-                           MOV  AX, MAX_WIDTH
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                           JG   REVERSE_X                 ;REVERSE IF GREATER
-
-
-    ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
-
-                           MOV  AX,Paddle_X
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->Start
-                           JB   NOT_COLLIDE
-                           ADD  AX,width_Paddle
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->End
-                           JBE  CHECK_Y
-
-    CHECK_Y:               
-                           MOV  AX,Paddle_Y
-                           SUB  AX,height_Paddle
-                           CMP  AX, BALL_POSITION_Y
-                           JA   NOT_COLLIDE
-                           JMP  REVERSE_Y
-
-
-    NOT_COLLIDE:           
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-    RT:                    RET
-
-    REVERSE_Y:             NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           RET
-
-    REVERSE_X:             NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
-
-                           RET
-MOVING_BALL ENDP
-
-
-
-HANDLE_COLLISION PROC
-    ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-                           MOV  AX,BALL_POSITION_Y
-                           ADD  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   X1
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-    ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
-    X1:                    MOV  AX,BALL_POSITION_Y
-                           SUB  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   .RT
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-.RT: RET
-
-.REVERSE_Y:
-                           NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
-                           RET
-HANDLE_COLLISION ENDP
-
-DESTROY_BRICK PROC
-                           PUSH AX
-                           PUSH BX
-                           PUSH DX
-                           PUSH CX
-                           PUSH DI
-    ;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
-                           MOV  DX,0
-                           MOV  AX,SI
-                           MOV  BX,320
-                           DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
-                           MOV  CX,DX
-                           MOV  DX,0
-                           MOV  BX,STEP_PER_COL
-                           SUB  AX,FIRST_ROW_POS
-                           DIV  BX
-                           MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
-
-                           MOV  DX,0
-                           MOV  AX,CX
-                           SUB  AX,FIRST_COL_POS
-                           MOV  BX,STEP_PER_ROW
-                           DIV  BX
-                           MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
-                           MOV  AX,BP
-                           MOV  BX,BRICKS_PER_ROW
-                           MUL  BX
-                           ADD  AX,CX
-                           MOV  DI,AX
-                           DEC  [COLOR_MATRIX+DI]
-
-                           POP  DI
-                           POP  CX
-                           POP  DX
-                           POP  BX
-                           POP  AX
-                           RET
-DESTROY_BRICK ENDP
-
-
-
-
-DRAWING_BALL PROC
-
-                    
-                           MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                           MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                           MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                           MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
-    DRAW_HORIZONTAL:       INT  10H
-                           INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                           MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                           SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
-                           JL   DRAW_HORIZONTAL
-
-
-                           INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                           MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
-                           MOV  BX, DX
-                           SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE
-                           JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                           RET                            ;ELSE WILL RETURN
-
-DRAWING_BALL ENDP
-
-DRAW_ALL_BRICKS PROC
-                           MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                           MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                           MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
-    DRAWIT:                
-                           CALL DRAWBRICK
-                           ADD  COL,STEP_PER_ROW
-                           INC  CRNT_BRICK
-                           INC  CX
-                           CMP  CX,BRICKS_PER_ROW
-                           JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                           MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
-                           INC  DX
-                           MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
-                           ADD  ROW,STEP_PER_COL
-                           CMP  DX,TOTAL_ROWS
-                           JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                           MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
-                           MOV  COL,FIRST_COL_POS
-                           RET
-DRAW_ALL_BRICKS ENDP
-
-
-
-DRAWBRICK PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-                           mov  ax,ROW                    ;==>column number
-                           mov  bx,320                    ;bx=320
-                           mul  bx                        ;ax=ax*bx
-                           add  ax,COL                    ;ax==>in now target pixel to draw
-                           MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
-                           MOV  DI,CRNT_BRICK
-                           mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                           mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                           mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                  mov  es:[si],bl                ;COLOR THIS PIXEL
-                           inc  si                        ;GO RIGHT
-                           inc  CX
-                           cmp  cx,BRICK_WIDTH
-                           jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                           add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                           sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
-                           INC  DX
-                           MOV  CX,0                      ;RESET COLUMNS COUNTER
-                           CMP  DX,BRICK_HEIGHT
-                           jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           ret
-DRAWBRICK ENDP
-
-Move_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-
-                           MOV  AH, 01h                   ; Function to check if a key is pressed
-                           INT  16h                       ; Call BIOS interrupt
-                           JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
-    ; Code to handle key press
-                           JMP  Done
-
-    NoKey:                 
-                           JMP  rett
-
-    Done:                  
-
-    ; Read the key
-                           MOV  AH, 00h
-                           INT  16h
-           
-    ; Check for left arrow (E0 4B)
-                           CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   left_pressed              ; Jump if Left Arrow
-                  
-    ; Check for right arrow (E0 4D)
-                           CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   right_pressed             ; Jump if Right Arrow
-                   
-                           JMP  rett                      ; Return to polling
-                        
-    left_pressed:          
-                   
-    ; Check for the boundries
-                           MOV  BX,Paddle_Speed
-                           SUB  Paddle_X,BX
-                           MOV  AX,RightBoundry
-                           CMP  Paddle_X,AX
-                           JB   Maintain_Right_Boundry
-                           JMP  rett                      ; Return to polling
-                   
-    right_pressed:         
-                           MOV  BX,Paddle_Speed
-                           ADD  Paddle_X,BX
-                           MOV  AX,LeftBoundry
-                           CMP  Paddle_X,AX
-                           JA   Maintain_Left_Boundry
-                           JMP  rett                      ; Return to polling
-     
-     	                 
-    Maintain_Right_Boundry:
-                           MOV  AX,RightBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-	                   
-    Maintain_Left_Boundry: 
-                           MOV  AX,LeftBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-
-
-    rett:                  
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           RET
-
-Move_Paddle endp
+                              MOV  AH,0CH
+                              MOV  AL,0fH
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              DEC  DX
+                              MOV  AX, PowerDown_Y
+                              ADD  AX, 4
+                              CMP  DX,AX
+                              JG   loopDown2_
+                            
+                            
+                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerDownWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  AX,PowerDownHeight
+                              SUB  AX,4
+                              ADD  DX,AX
     
-    
-                  
-           
-Draw_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-               
-    ;                        MOV  CX,0
-    ;                        MOV  DX,Paddle_Y
-	                 
-	                 
-    ; clear_The_Screen_hori:
-	                 
-    ;                        MOV  AX,320
-    ; clear_The_Screen_ver:
-    ; ; AL = Color, BH = Page Number, CX = x, DX = y
-    ;                        PUSH AX
-    ;                        MOV  AH,0CH
-    ;                        MOV  AL,00H
-    ;                        MOV  BH,00
-    ;                        INT  10h
-    ;                        INC  CX
-    ;                        POP  AX
-    ;                        DEC  AX
-    ;                        JNZ  clear_The_Screen_ver
-    ;                        MOV  CX,0
-    ;                        INC  DX
-    ;                        CMP  DX,199
-    ;                        JNZ  clear_The_Screen_hori
-	                 
-    ; the coordinates of the paddle
-	                 
-                           MOV  CX,Paddle_X
-                           MOV  DX,Paddle_Y
-	                 	                 
-		
-    draw_Paddle_hori:      
-                           MOV  BX,width_Paddle
-	                 
- 	
-    draw_Paddle_ver:       
+    loopDownInv2_:                                           ; Draw the second line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
-                           MOV  AH,0CH
-                           MOV  AL,07H
-                           PUSH BX
-                           MOV  BH,00
-                           INT  10h
-                           INC  CX
-                           POP  BX
-                           DEC  BL
-                           JNZ  draw_Paddle_ver
-                           MOV  CX,Paddle_X
-                           INC  DX
-                           CMP  DX,199
-                           JNZ  draw_Paddle_hori
-	    
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
+                              MOV  AH,0CH
+                              MOV  AL,0fH
+                              MOV  BH,00
+                              INT  10h
+                              DEC  CX
+                              DEC  DX
+                              MOV  AX, PowerDown_Y
+                              ADD  AX, 4
+                              CMP  DX,AX
+                              JG   loopDownInv2_
                            
-                           RET
-Draw_Paddle endp
-
-
-
-end main.MODEL SMALL
-.STACK 4000
-.DATA
-
-    MAX_WIDTH       DW  140H              ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT       DW  0C8H              ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
-
-    BALL_POSITION_X DW  0A0H              ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y DW  64H               ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE       EQU 05H               ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
-
-    PREV_TIME       DB  0                 ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED      DB  7H                ;TO CONTROLL THE SPEED OF THE BALL
-
-    BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X    DW  2H
-
-    BALL_COLOR      DB  04H               ;RED COLOR
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Paddle var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle    DW  50d
-    height_Paddle   DW  4d
-
-    Time_Aux        DB  0                 ; variable used when changing if the time is changed
-
-    Paddle_Speed    DW  6
-
-    Paddle_X        DW  135D
-    Paddle_Y        DW  195D
-
-    LeftBoundry     DW  265
-    RightBoundry    DW  6
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Breaks var
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    ;size for each brick
-    BRICK_WIDTH     EQU 35
-    BRICK_HEIGHT    EQU 8
-
-    ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
-    FIRST_COL_POS   EQU 1
-
-    BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS      EQU 4                 ; NUMBER OF ROWS
-
-    STEP_PER_ROW    EQU 40                ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL    EQU 12                ;(BRICK_WIDTH+1PX SPACE)
-
-    COLOR_MATRIX    db  11 dup (1,2,3)    ; EACH Brick must have certain color here
-
-
-    ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW             dw  FIRST_ROW_POS
-    COL             dw  FIRST_COL_POS
-    CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
-
-.CODE
-
-MAIN PROC FAR
-
-                           MOV  AX, @DATA
-                           MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
-
-                           mov  ax, 0A000h                ; Video memory segment for mode 13h
-                           mov  es, ax                    ; Set ES to point to video memory
-                           MOV  AH, 00H
-                           MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
-                           INT  10H
-
-                           CALL CLEARING_SCREEN
-    ; CALL Move_Paddle
-
-    TIME_AGAIN:            MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                           INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
-
-                           MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                           CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
-                           JE   TIME_AGAIN
-
-
-                           MOV  PREV_TIME, DL
-                           CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                           CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                           CALL DRAWING_BALL              ;DRAWING BALL
-
-                           CALL Move_Paddle
-                           CALL Draw_Paddle
-                           CALL MOVING_BALL
-                           CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-                           JMP  TIME_AGAIN
-
-
-                           RET
-MAIN ENDP
-
-
-
-CLEARING_SCREEN PROC
-
-                           MOV  AH, 06H                   ;SCROLL UP
-                           XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                           XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                           MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                           MOV  BH, 00H                   ;BLACK COLOR
-                           INT  10H                       ;CLEAR THE SCREEN
-
-
-                           RET
-CLEARING_SCREEN ENDP
-
-
-MOVING_BALL PROC
-
-                           MOV  AX, BALL_SPEED_Y
-                           SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
-
-                           CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                           JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
-
-                           MOV  AX, MAX_HIGHT
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                           JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
-
-                           MOV  AX, BALL_SPEED_X
-                           ADD  BALL_POSITION_X, AX       ;MOV RIGHT
-
-                           CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                           JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
-
-                           MOV  AX, MAX_WIDTH
-                           SUB  AX, BALL_SIZE
-                           CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                           JG   REVERSE_X                 ;REVERSE IF GREATER
-
-
-    ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
-
-                           MOV  AX,Paddle_X
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->Start
-                           JB   NOT_COLLIDE
-                           ADD  AX,width_Paddle
-                           CMP  AX, BALL_POSITION_X       ;; Check x -->End
-                           JBE  CHECK_Y
-
-    CHECK_Y:               
-                           MOV  AX,Paddle_Y
-                           SUB  AX,height_Paddle
-                           CMP  AX, BALL_POSITION_Y
-                           JA   NOT_COLLIDE
-                           JMP  REVERSE_Y
-
-
-    NOT_COLLIDE:           
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-    RT:                    RET
-
-    REVERSE_Y:             NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           RET
-
-    REVERSE_X:             NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
-
-                           RET
-MOVING_BALL ENDP
-
-
-
-HANDLE_COLLISION PROC
-    ;WHEN COLLIDE WITH THE UPPER FACE OF BRICK
-                           MOV  AX,BALL_POSITION_Y
-                           ADD  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   X1
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-    ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
-    X1:                    MOV  AX,BALL_POSITION_Y
-                           SUB  AX,BALL_SIZE
-                           MOV  BX,320
-                           MUL  BX
-                           ADD  AX,BALL_POSITION_X
-                           MOV  SI,AX
-                           MOV  DL,BALL_COLOR
-                           CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
-                           JZ   .RT
-                           CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                           JNZ  .REVERSE_Y
-
-.RT: RET
-
-.REVERSE_Y:
-                           NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                           CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
-                           RET
-HANDLE_COLLISION ENDP
-
-DESTROY_BRICK PROC
-                           PUSH AX
-                           PUSH BX
-                           PUSH DX
-                           PUSH CX
-                           PUSH DI
-    ;;;;;;;;;;;;;;;;;;;MATHEMATICAL OPERATIONS TO DETERMINE WHICH BRICK I COLIDED WITH;;;;;;;;;;;;;;;;;;;
-                           MOV  DX,0
-                           MOV  AX,SI
-                           MOV  BX,320
-                           DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
-                           MOV  CX,DX
-                           MOV  DX,0
-                           MOV  BX,STEP_PER_COL
-                           SUB  AX,FIRST_ROW_POS
-                           DIV  BX
-                           MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
-
-                           MOV  DX,0
-                           MOV  AX,CX
-                           SUB  AX,FIRST_COL_POS
-                           MOV  BX,STEP_PER_ROW
-                           DIV  BX
-                           MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
-                           MOV  AX,BP
-                           MOV  BX,BRICKS_PER_ROW
-                           MUL  BX
-                           ADD  AX,CX
-                           MOV  DI,AX
-                           DEC  [COLOR_MATRIX+DI]
-
-                           POP  DI
-                           POP  CX
-                           POP  DX
-                           POP  BX
-                           POP  AX
-                           RET
-DESTROY_BRICK ENDP
-
-
-
-
-DRAWING_BALL PROC
-
-                    
-                           MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                           MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                           MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                           MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
-    DRAW_HORIZONTAL:       INT  10H
-                           INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                           MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                           SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
-                           JL   DRAW_HORIZONTAL
-
-
-                           INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                           MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
-                           MOV  BX, DX
-                           SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
-                           CMP  BX, BALL_SIZE
-                           JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                           RET                            ;ELSE WILL RETURN
-
-DRAWING_BALL ENDP
-
-DRAW_ALL_BRICKS PROC
-                           MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                           MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                           MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
-    DRAWIT:                
-                           CALL DRAWBRICK
-                           ADD  COL,STEP_PER_ROW
-                           INC  CRNT_BRICK
-                           INC  CX
-                           CMP  CX,BRICKS_PER_ROW
-                           JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                           MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
-                           INC  DX
-                           MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
-                           ADD  ROW,STEP_PER_COL
-                           CMP  DX,TOTAL_ROWS
-                           JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                           MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
-                           MOV  COL,FIRST_COL_POS
-                           RET
-DRAW_ALL_BRICKS ENDP
-
-
-
-DRAWBRICK PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-                           mov  ax,ROW                    ;==>column number
-                           mov  bx,320                    ;bx=320
-                           mul  bx                        ;ax=ax*bx
-                           add  ax,COL                    ;ax==>in now target pixel to draw
-                           MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
-                           MOV  DI,CRNT_BRICK
-                           mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                           mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                           mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                  mov  es:[si],bl                ;COLOR THIS PIXEL
-                           inc  si                        ;GO RIGHT
-                           inc  CX
-                           cmp  cx,BRICK_WIDTH
-                           jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                           add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                           sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
-                           INC  DX
-                           MOV  CX,0                      ;RESET COLUMNS COUNTER
-                           CMP  DX,BRICK_HEIGHT
-                           jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           ret
-DRAWBRICK ENDP
-
-Move_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-
-                           MOV  AH, 01h                   ; Function to check if a key is pressed
-                           INT  16h                       ; Call BIOS interrupt
-                           JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
-    ; Code to handle key press
-                           JMP  Done
-
-    NoKey:                 
-                           JMP  rett
-
-    Done:                  
-
-    ; Read the key
-                           MOV  AH, 00h
-                           INT  16h
-           
-    ; Check for left arrow (E0 4B)
-                           CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   left_pressed              ; Jump if Left Arrow
-                  
-    ; Check for right arrow (E0 4D)
-                           CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                           JE   right_pressed             ; Jump if Right Arrow
-                   
-                           JMP  rett                      ; Return to polling
-                        
-    left_pressed:          
-                   
-    ; Check for the boundries
-                           MOV  BX,Paddle_Speed
-                           SUB  Paddle_X,BX
-                           MOV  AX,RightBoundry
-                           CMP  Paddle_X,AX
-                           JB   Maintain_Right_Boundry
-                           JMP  rett                      ; Return to polling
-                   
-    right_pressed:         
-                           MOV  BX,Paddle_Speed
-                           ADD  Paddle_X,BX
-                           MOV  AX,LeftBoundry
-                           CMP  Paddle_X,AX
-                           JA   Maintain_Left_Boundry
-                           JMP  rett                      ; Return to polling
-     
-     	                 
-    Maintain_Right_Boundry:
-                           MOV  AX,RightBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-	                   
-    Maintain_Left_Boundry: 
-                           MOV  AX,LeftBoundry
-                           MOV  Paddle_X,AX
-                           JMP  rett
-
-
-    rett:                  
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           RET
-
-Move_Paddle endp
-    
-    
-                  
-           
-Draw_Paddle PROC
-                           push DX
-                           push CX
-                           PUSH AX
-                           PUSH BX
-               
-    ;                        MOV  CX,0
-    ;                        MOV  DX,Paddle_Y
-	                 
-	                 
-    ; clear_The_Screen_hori:
-	                 
-    ;                        MOV  AX,320
-    ; clear_The_Screen_ver:
-    ; ; AL = Color, BH = Page Number, CX = x, DX = y
-    ;                        PUSH AX
-    ;                        MOV  AH,0CH
-    ;                        MOV  AL,00H
-    ;                        MOV  BH,00
-    ;                        INT  10h
-    ;                        INC  CX
-    ;                        POP  AX
-    ;                        DEC  AX
-    ;                        JNZ  clear_The_Screen_ver
-    ;                        MOV  CX,0
-    ;                        INC  DX
-    ;                        CMP  DX,199
-    ;                        JNZ  clear_The_Screen_hori
-	                 
-    ; the coordinates of the paddle
-	                 
-                           MOV  CX,Paddle_X
-                           MOV  DX,Paddle_Y
-	                 	                 
-		
-    draw_Paddle_hori:      
-                           MOV  BX,width_Paddle
-	                 
- 	
-    draw_Paddle_ver:       
-    ; AL = Color, BH = Page Number, CX = x, DX = y
-                           MOV  AH,0CH
-                           MOV  AL,07H
-                           PUSH BX
-                           MOV  BH,00
-                           INT  10h
-                           INC  CX
-                           POP  BX
-                           DEC  BL
-                           JNZ  draw_Paddle_ver
-                           MOV  CX,Paddle_X
-                           INC  DX
-                           CMP  DX,199
-                           JNZ  draw_Paddle_hori
-	    
-                           POP  BX
-                           POP  AX
-                           pop  CX
-                           pop  DX
-                           
-                           RET
-Draw_Paddle endp
-
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+
+                              RET
+       
+DRAW_DOWN_ARROW ENDP
+ 
+ 
+ 
+ 
 
 
 end main
