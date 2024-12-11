@@ -243,6 +243,30 @@ HANDLE_COLLISION PROC
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
                               CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              JZ   X2
+                              CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              JNZ  .REVERSE_Y
+
+    ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
+    X2:                       MOV  AX,BALL_POSITION_Y
+                              MOV  BX,320
+                              MUL  BX
+                              ADD  AX,BALL_POSITION_X
+                              ADD  AX,BALL_SIZE
+                              MOV  SI,AX
+                              MOV  DL,BALL_COLOR
+                              CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              JZ   X3
+                              CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              JNZ  .REVERSE_Y
+    X3:                       MOV  AX,BALL_POSITION_Y
+                              MOV  BX,320
+                              MUL  BX
+                              ADD  AX,BALL_POSITION_X
+                              SUB  AX,BALL_SIZE
+                              MOV  SI,AX
+                              MOV  DL,BALL_COLOR
+                              CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   .RT
                               CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
                               JNZ  .REVERSE_Y
