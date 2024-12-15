@@ -64,7 +64,7 @@
     BRICK_HEIGHT    EQU 8
 
     ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
+    FIRST_ROW_POS   EQU 14
     FIRST_COL_POS   EQU 1
 
     BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
@@ -80,6 +80,17 @@
     ROW             dw  FIRST_ROW_POS
     COL             dw  FIRST_COL_POS
     CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;Stats var
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    TEXT_GAME_OVER_PLAY_AGAIN db 'GAME OVER! PLAY AGAIN? (Y/N)','$'
+    TEXT_SCORE db 'SCORE: $'
+    TEXT_LIVES db 'LIVES: $'
+    SCORE db 0
+    LIVES db 3
+    SCORE_CURSOR_X db 8
+    SCORE_MAX_WIDTH dp 3
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .CODE
 
@@ -109,7 +120,8 @@ MAIN PROC FAR
                               CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
                               CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
                               CALL DRAWING_BALL              ;DRAWING BALL
-
+                              CALL DISPLAY_STATS             ;DISPLAY STATS
+                              CALL DRAW_WHITE_LINE          ;DRAW WHITE LINE TO SEPARATE THE STATS FROM THE GAME
                               CALL Move_Paddle
                               CALL Draw_Paddle
                               CALL MOVING_BALL
@@ -160,13 +172,14 @@ MOVING_BALL PROC
                               MOV  AX, BALL_SPEED_Y
                               SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
 
-                              CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                              JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
+                              CMP  BALL_POSITION_Y, 15        ;CHECK IF Y < 15 (THE HIGHT OF THE WINDOW)
+                              JL   REVERSE_Y                 ;IF Y < 15 REVERSE THE DIRECTION OF MOVING
 
                               MOV  AX, MAX_HIGHT
                               SUB  AX, BALL_SIZE
                               CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                              JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
+                              JG   HANDEL_LOSE_LIFE                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
+                              
 
                               MOV  AX, BALL_SPEED_X
                               ADD  BALL_POSITION_X, AX       ;MOV RIGHT
@@ -216,6 +229,9 @@ MOVING_BALL PROC
     REVERSE_X:                NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
                               POP  AX
                               RET
+    HANDEL_LOSE_LIFE:       CALL Lose_Life
+                            jmp REVERSE_Y
+                            RET
 MOVING_BALL ENDP
 
 
@@ -322,10 +338,12 @@ DESTROY_BRICK PROC
                               MOV  BX,BRICKS_PER_ROW
                               MUL  BX
                               ADD  AX,CX
-                              MOV  DI,AX
+                              MOV  DI,AX                    ;;;;;;;;;;;;;;;;;;;;;;;;;;;DI IS THE ACTUAL BRICK
                               DEC  [COLOR_MATRIX+DI]
-
-                              POP  DI
+                              cmp [COLOR_MATRIX+DI],0
+                              JNZ  Continue
+                              INC SCORE
+                              Continue:POP  DI
                               POP  CX
                               POP  DX
                               POP  BX
@@ -960,9 +978,127 @@ DRAW_DOWN_ARROW PROC
        
 DRAW_DOWN_ARROW ENDP
  
- 
- 
- 
+DISPLAY_STATS PROC
+
+                            push ax
+                            push bx
+                            push cx
+                            push dx
+
+                    ;       Shows the score text
+                            MOV AH,02h                       ;set cursor position
+                            MOV BH,00h                       ;set page number
+                            MOV DH,0h                       ;set row 
+                            MOV DL,1h						 ;set column
+                            INT 10h							 
+
+                            MOV AH,09h                       ;WRITE STRING 
+                            LEA DX, TEXT_SCORE               ;give DX a pointer 
+                            INT 21h                          ;print the string
+
+                            MOV AH,02h                       ;set cursor position
+                            MOV BH,00h                       ;set page number
+                            MOV DH,0h                       ;set row 
+                            MOV DL,8h						 ;set column
+                            INT 10h
+
+                            ;Display Score Value
+                            MOV AL, SCORE
+                            MOV AH,0
+                            CALL PRINT_NUMBER
+
+                            ;       Shows the lives text
+                            MOV AH,02h                       ;set cursor position
+                            MOV BH,00h                       ;set page number
+                            MOV DH,0h                       ;set row
+                            MOV DL,20h						 ;set column
+                            INT 10h
+                            
+                            MOV AH,09h                       ;WRITE STRING 
+                            LEA DX, TEXT_LIVES               ;give DX a pointer
+                            INT 21h                          ;print the string
+
+                            MOV AH,02h                       ;set cursor position
+                            MOV BH,00h                       ;set page number
+                            MOV DH,0h                       ;set row
+                            MOV DL,27h						 ;set column
+                            INT 10h
+
+                            ;Display Lives Value
+                            MOV AL, LIVES
+                            MOV AH,0
+                            CALL PRINT_NUMBER
 
 
+
+                            pop dx
+                            pop cx
+                            pop bx
+                            pop ax
+                            RET
+DISPLAY_STATS ENDP
+
+PRINT_NUMBER PROC
+                           PUSH AX
+                           PUSH BX
+                           PUSH CX
+                           PUSH DX
+
+                           MOV CX,0                   ; Clear CX (digit counter)
+    CONVERT_LOOP:
+                           MOV  DX,0                   ; Clear DX (remainder)
+                           MOV  BX, 10                   ; Base 10
+                           DIV  BX                       ; Divide AX by 10
+                           PUSH DX                       ; Push remainder (digit)
+                           INC  CX                       ; Increment digit counter
+                           ADD  AX, 0                   ; Check if quotient is 0
+                           JNZ  CONVERT_LOOP             ; Repeat if not
+
+    PRINT_DIGITS:
+                           POP  DX                       ; Get next digit
+                           ADD  DL, '0'                  ; Convert to ASCII
+                           MOV  AH, 02h                  ; Function to print character
+                           INT  21h                      ; Print digit
+                           LOOP PRINT_DIGITS             ; Repeat for all digits
+
+                           POP DX
+                           POP CX
+                           POP BX
+                           POP AX
+                           RET
+PRINT_NUMBER ENDP
+
+DRAW_WHITE_LINE PROC
+    push AX
+    push BX
+    push CX
+    push DX
+
+    ; Draw a horizontal white line
+    MOV CX, 320             ; Number of pixels in a row
+    MOV DX, 10             ; Row position (y-coordinate)
+    MOV AL, 15              ; Color (white)
+    MOV AH, 0Ch             ; Function to write pixel
+
+DRAW_LINE_LOOP:
+    MOV BX, CX              ; Set column position (x-coordinate)
+    INT 10h                 ; Draw pixel
+    DEC CX
+    JNZ DRAW_LINE_LOOP
+
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+    RET
+DRAW_WHITE_LINE ENDP
+Lose_Life PROC
+    CMP LIVES,0
+    JNE  DEC_LIVES
+    RET
+    DEC_LIVES:
+    DEC LIVES
+    RET
+Lose_Life ENDP
 end main
+
