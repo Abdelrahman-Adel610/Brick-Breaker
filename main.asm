@@ -2,86 +2,97 @@
 .STACK 4000
 .DATA
 
-    MAX_WIDTH       DW  140H              ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT       DW  0C8H              ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
+    MAX_WIDTH                 DW              140H                                  ;THE WIDTH OF THE WINDOW
+    MAX_HIGHT                 DW              0C8H                                  ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
 
-    BALL_POSITION_X DW  0A0H              ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y DW  64H               ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE       EQU 05H               ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
+    BALL_POSITION_X           DW              0A0H                                  ;X POSITION OF THE BALL COLUMNNN
+    BALL_POSITION_Y           DW              64H                                   ;Y POSITION OF THE BALL ROWWWWWW
+    BALL_SIZE                 EQU             05H                                   ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
 
-    PREV_TIME       DB  0                 ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED      DB  7H                ;TO CONTROLL THE SPEED OF THE BALL
+    PREV_TIME                 DB              0                                     ;USED TO CHECK IF THE TIME HAS CHANGED
+    BALL_SPEED                DB              7H                                    ;TO CONTROLL THE SPEED OF THE BALL
 
-    BALL_SPEED_Y    DW  5H                ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X    DW  2H
+    BALL_SPEED_Y              DW              5H                                    ;THE SPEED OF THE BALL IN Y DIRECTION
+    BALL_SPEED_X              DW              2H
 
-    BALL_COLOR      DB  0FH               ;RED COLOR  CHANGED TO WHITE TO HANDLE THE COLLISIONS
+    BALL_COLOR                DB              0FH                                   ;RED COLOR  CHANGED TO WHITE TO HANDLE THE COLLISIONS
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Paddle var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle    DW  50d
-    height_Paddle   DW  4d
+    width_Paddle              DW              50d
+    height_Paddle             DW              4d
 
-    Paddle_Color    DB  0FH
-    Paddle_Speed    DW  6
+    Paddle_Color              DB              0FH
+    Paddle_Speed              DW              6
 
-    Paddle_X        DW  135D
-    Paddle_Y        DW  196D
+    Paddle_X                  DW              135D
+    Paddle_Y                  DW              196D
 
-    LeftBoundry     DW  265
-    RightBoundry    DW  6
+    LeftBoundry               DW              265
+    RightBoundry              DW              6
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerUp var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    PowerUpWidth    DW  10d
-    PowerUpHeight   DW  10d
+    PowerUpWidth              DW              10d
+    PowerUpHeight             DW              10d
 
-    PowerUP_Speed   DW  1
+    PowerUP_Speed             DW              1
 
-    PowerUp_X       DW  135D
-    PowerUp_Y       DW  155D
+    PowerUp_X                 DW              135D
+    PowerUp_Y                 DW              155D
 
-    IsPowerUp       DW  0
-    IsPowerUp_pre   DW  0
-    Points          DB  0
+    IsPowerUp                 DW              0
+    IsPowerUp_pre             DW              0
+    Points                    DB              0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerDown var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    PowerDownWidth  DW  10d
-    PowerDownHeight DW  10d
+    PowerDownWidth            DW              10d
+    PowerDownHeight           DW              10d
 
  
-    PowerDown_Speed DW  1
+    PowerDown_Speed           DW              1
 
-    PowerDown_X     DW  135D
-    PowerDown_Y     DW  155D
-    IsPowerDown     DW  0
-    IsPowerDown_pre DW  0
+    PowerDown_X               DW              135D
+    PowerDown_Y               DW              155D
+    IsPowerDown               DW              0
+    IsPowerDown_pre           DW              0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Breaks var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;size for each brick
-    BRICK_WIDTH     EQU 35
-    BRICK_HEIGHT    EQU 8
+    BRICK_WIDTH               EQU             35
+    BRICK_HEIGHT              EQU             8
 
     ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS   EQU 4
-    FIRST_COL_POS   EQU 1
+    FIRST_ROW_POS             EQU             14
+    FIRST_COL_POS             EQU             1
 
-    BRICKS_PER_ROW  EQU 8                 ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS      EQU 4                 ; NUMBER OF ROWS
+    BRICKS_PER_ROW            EQU             8                                     ; NUMBER OF BRICKS IN EACH ROW
+    TOTAL_ROWS                EQU             4                                     ; NUMBER OF ROWS
 
-    STEP_PER_ROW    EQU 40                ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL    EQU 12                ;(BRICK_WIDTH+1PX SPACE)
+    STEP_PER_ROW              EQU             40                                    ;(BRICK_WIDTH+1PX SPACE)
+    STEP_PER_COL              EQU             12                                    ;(BRICK_WIDTH+1PX SPACE)
 
-    COLOR_MATRIX    db  11 dup (1,2,3)    ; EACH Brick must have certain color here
+    COLOR_MATRIX              db              11 dup (1,2,3)                        ; EACH Brick must have certain color here
 
 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW             dw  FIRST_ROW_POS
-    COL             dw  FIRST_COL_POS
-    CRNT_BRICK      dW  0                 ;counter used to draw each brick with its coressponding color
+    ROW                       dw              FIRST_ROW_POS
+    COL                       dw              FIRST_COL_POS
+    CRNT_BRICK                dW              0                                     ;counter used to draw each brick with its coressponding color
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;Stats var
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    TEXT_GAME_OVER_PLAY_AGAIN db              'GAME OVER! PLAY AGAIN? (Y/N)','$'
+    TEXT_SCORE                db              'SCORE: $'
+    TEXT_LIVES                db              'LIVES: $'
+    SCORE                     db              0
+    LIVES                     db              3
+    SCORE_CURSOR_X            db              8
+                              SCORE_MAX_WIDTH dp 3
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .CODE
 
@@ -109,6 +120,8 @@ MAIN PROC FAR
 
                               MOV  PREV_TIME, DL
     ;   CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
+
+
                               CMP  IsPowerUp,0               ; CHECK IF THERE IS A POWERUP
                               JE   CHWCK_POWERDOWN
                               CMP  IsPowerUp_pre,0           ; CHECK IF THERE IS A POWERUP
@@ -144,11 +157,14 @@ MAIN PROC FAR
 
 
     CONT:                     
+                              CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
                               CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
                               CALL DRAWING_BALL              ;DRAWING BALL
-                              CALL clear_Paddle              ; CLEAR THE PREVIOUS PADDLE
-                              CALL Move_Paddle               ; SET THE POSITION OF THE NEW PADDLE
-                              CALL Draw_Paddle               ; DRAW THE NEW PADDLE
+                              CALL DISPLAY_STATS             ;DISPLAY STATS
+                              CALL DRAW_WHITE_LINE           ;DRAW WHITE LINE TO SEPARATE THE STATS FROM THE GAME
+                              CALL clear_Paddle
+                              CALL Move_Paddle
+                              CALL Draw_Paddle
                               CALL MOVING_BALL
                               CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
 
@@ -185,13 +201,14 @@ MOVING_BALL PROC
                               MOV  AX, BALL_SPEED_Y
                               SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
 
-                              CMP  BALL_POSITION_Y, 0        ;CHECK IF Y < 0
-                              JL   REVERSE_Y                 ;IF Y < 0 REVERSE THE DIRECTION OF MOVING
+                              CMP  BALL_POSITION_Y, 15       ;CHECK IF Y < 15 (THE HIGHT OF THE WINDOW)
+                              JL   REVERSE_Y                 ;IF Y < 15 REVERSE THE DIRECTION OF MOVING
 
                               MOV  AX, MAX_HIGHT
                               SUB  AX, BALL_SIZE
                               CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                              JG   REVERSE_Y                 ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
+                              JG   HANDEL_LOSE_LIFE          ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
+                              
 
                               MOV  AX, BALL_SPEED_X
                               ADD  BALL_POSITION_X, AX       ;MOV RIGHT
@@ -240,6 +257,9 @@ MOVING_BALL PROC
 
     REVERSE_X:                NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
                               POP  AX
+                              RET
+    HANDEL_LOSE_LIFE:         CALL Lose_Life
+                              jmp  REVERSE_Y
                               RET
 MOVING_BALL ENDP
 
@@ -348,10 +368,12 @@ DESTROY_BRICK PROC
                               MOV  BX,BRICKS_PER_ROW
                               MUL  BX
                               ADD  AX,CX
-                              MOV  DI,AX
+                              MOV  DI,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;DI IS THE ACTUAL BRICK
                               DEC  [COLOR_MATRIX+DI]
-
-                              POP  DI
+                              cmp  [COLOR_MATRIX+DI],0
+                              JNZ  Continue
+                              INC  SCORE
+    Continue:                 POP  DI
                               POP  CX
                               POP  DX
                               POP  BX
@@ -1336,9 +1358,127 @@ DRAW_DOWN_ARROW PROC
        
 DRAW_DOWN_ARROW ENDP
  
- 
- 
- 
+DISPLAY_STATS PROC
+
+                              push ax
+                              push bx
+                              push cx
+                              push dx
+
+    ;       Shows the score text
+                              MOV  AH,02h                    ;set cursor position
+                              MOV  BH,00h                    ;set page number
+                              MOV  DH,0h                     ;set row
+                              MOV  DL,1h                     ;set column
+                              INT  10h
+
+                              MOV  AH,09h                    ;WRITE STRING
+                              LEA  DX, TEXT_SCORE            ;give DX a pointer
+                              INT  21h                       ;print the string
+
+                              MOV  AH,02h                    ;set cursor position
+                              MOV  BH,00h                    ;set page number
+                              MOV  DH,0h                     ;set row
+                              MOV  DL,8h                     ;set column
+                              INT  10h
+
+    ;Display Score Value
+                              MOV  AL, SCORE
+                              MOV  AH,0
+                              CALL PRINT_NUMBER
+
+    ;       Shows the lives text
+                              MOV  AH,02h                    ;set cursor position
+                              MOV  BH,00h                    ;set page number
+                              MOV  DH,0h                     ;set row
+                              MOV  DL,20h                    ;set column
+                              INT  10h
+                            
+                              MOV  AH,09h                    ;WRITE STRING
+                              LEA  DX, TEXT_LIVES            ;give DX a pointer
+                              INT  21h                       ;print the string
+
+                              MOV  AH,02h                    ;set cursor position
+                              MOV  BH,00h                    ;set page number
+                              MOV  DH,0h                     ;set row
+                              MOV  DL,27h                    ;set column
+                              INT  10h
+
+    ;Display Lives Value
+                              MOV  AL, LIVES
+                              MOV  AH,0
+                              CALL PRINT_NUMBER
 
 
+
+                              pop  dx
+                              pop  cx
+                              pop  bx
+                              pop  ax
+                              RET
+DISPLAY_STATS ENDP
+
+PRINT_NUMBER PROC
+                              PUSH AX
+                              PUSH BX
+                              PUSH CX
+                              PUSH DX
+
+                              MOV  CX,0                      ; Clear CX (digit counter)
+    CONVERT_LOOP:             
+                              MOV  DX,0                      ; Clear DX (remainder)
+                              MOV  BX, 10                    ; Base 10
+                              DIV  BX                        ; Divide AX by 10
+                              PUSH DX                        ; Push remainder (digit)
+                              INC  CX                        ; Increment digit counter
+                              ADD  AX, 0                     ; Check if quotient is 0
+                              JNZ  CONVERT_LOOP              ; Repeat if not
+
+    PRINT_DIGITS:             
+                              POP  DX                        ; Get next digit
+                              ADD  DL, '0'                   ; Convert to ASCII
+                              MOV  AH, 02h                   ; Function to print character
+                              INT  21h                       ; Print digit
+                              LOOP PRINT_DIGITS              ; Repeat for all digits
+
+                              POP  DX
+                              POP  CX
+                              POP  BX
+                              POP  AX
+                              RET
+PRINT_NUMBER ENDP
+
+DRAW_WHITE_LINE PROC
+                              push AX
+                              push BX
+                              push CX
+                              push DX
+
+    ; Draw a horizontal white line
+                              MOV  CX, 320                   ; Number of pixels in a row
+                              MOV  DX, 10                    ; Row position (y-coordinate)
+                              MOV  AL, 15                    ; Color (white)
+                              MOV  AH, 0Ch                   ; Function to write pixel
+
+    DRAW_LINE_LOOP:           
+                              MOV  BX, CX                    ; Set column position (x-coordinate)
+                              INT  10h                       ; Draw pixel
+                              DEC  CX
+                              JNZ  DRAW_LINE_LOOP
+
+                              pop  DX
+                              pop  CX
+                              pop  BX
+                              pop  AX
+                              RET
+DRAW_WHITE_LINE ENDP
+Lose_Life PROC
+                              CMP  LIVES,0
+                              JNE  DEC_LIVES
+                              RET
+    DEC_LIVES:                
+                              DEC  LIVES
+                              RET
+Lose_Life ENDP
 end main
+
