@@ -91,7 +91,7 @@
     SCORE                     db              0
     LIVES                     db              3
     SCORE_CURSOR_X            db              8
-                              SCORE_MAX_WIDTH dp 3
+    SCORE_MAX_WIDTH           db              3
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .CODE
@@ -157,7 +157,7 @@ MAIN PROC FAR
 
 
     CONT:                     
-                              CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
+                              ;CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
                               CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
                               CALL DRAWING_BALL              ;DRAWING BALL
                               CALL DISPLAY_STATS             ;DISPLAY STATS
@@ -1175,7 +1175,7 @@ Clear_DOWN_ARROW PROC
     loopDownInv_Clear:                                       ; Clear the second line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,00 H
+                              MOV  AL,00H
                               MOV  BH,00
                               INT  10h
                               DEC  CX
@@ -1201,7 +1201,7 @@ Clear_DOWN_ARROW PROC
     loopDown2_Clear:                                         ; Clear the first line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,00 H
+                              MOV  AL,00H
                               MOV  BH,00
                               INT  10h
                               INC  CX
@@ -1224,7 +1224,7 @@ Clear_DOWN_ARROW PROC
     loopDownInv2_Clear:                                      ; Clear the second line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,00 H
+                              MOV  AL,00H
                               MOV  BH,00
                               INT  10h
                               DEC  CX
