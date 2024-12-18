@@ -42,7 +42,8 @@
     PowerUp_Y       DW  155D
 
     IsPowerUp       DW  0
-    Points          DW  0
+    IsPowerUp_pre   DW  0
+    Points          DB  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerDown var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -55,6 +56,7 @@
     PowerDown_X     DW  135D
     PowerDown_Y     DW  155D
     IsPowerDown     DW  0
+    IsPowerDown_pre DW  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Breaks var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -106,27 +108,50 @@ MAIN PROC FAR
 
 
                               MOV  PREV_TIME, DL
-                              CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                              CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                              CALL DRAWING_BALL              ;DRAWING BALL
-
-                              CALL Move_Paddle
-                              CALL Draw_Paddle
-                              CALL MOVING_BALL
-                              CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
-
+    ;   CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
                               CMP  IsPowerUp,0               ; CHECK IF THERE IS A POWERUP
                               JE   CHWCK_POWERDOWN
+                              CMP  IsPowerUp_pre,0           ; CHECK IF THERE IS A POWERUP
+                              JE   CHECK_PRE_UP
+                              CALL Clear_PowerUp
+                              CALL Clear_UP_ARROW
+                              CALL Move_Power_UP
                               CALL Draw_PowerUp
                               CALL DRAW_UP_ARROW
-                              CALL Move_Power_UP
+
+    CHECK_PRE_UP:             
+                              CALL Clear_PowerUp
+                              CALL Clear_UP_ARROW
+                              MOV  IsPowerUp,0
+
 
     CHWCK_POWERDOWN:          
                               CMP  IsPowerDown,0             ; CHECK IF THERE IS A POWERDOWN
-                              JE   TIME_AGAIN
+                              JE   CONT
+                              CMP  IsPowerDown_pre,0         ; CHECK IF THERE IS A POWERD   OWN
+                              JE   CHECK_PRE_DOWN
+                              CALL Clear_PowerDown
+                              CALL Clear_DOWN_ARROW
+                              CALL Move_Power_Down
                               CALL Draw_PowerDown
                               CALL DRAW_DOWN_ARROW
-                              CALL Move_Power_Down
+                              JMP  CONT
+
+    CHECK_PRE_DOWN:           
+                              CALL Clear_PowerDown
+                              CALL Clear_DOWN_ARROW
+                              MOV  IsPowerDown,0
+
+
+    CONT:                     
+                              CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
+                              CALL DRAWING_BALL              ;DRAWING BALL
+                              CALL clear_Paddle              ; CLEAR THE PREVIOUS PADDLE
+                              CALL Move_Paddle               ; SET THE POSITION OF THE NEW PADDLE
+                              CALL Draw_Paddle               ; DRAW THE NEW PADDLE
+                              CALL MOVING_BALL
+                              CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
+
 
     ;    CALL Duplicate_Paddle_Velocity    ;Power up
     ;    CALL Halv_Paddle_Velocity         ;Power down
@@ -297,6 +322,7 @@ DESTROY_BRICK PROC
                               CMP  Points,3
                               JNE  CNT
                               MOV  IsPowerDown,1
+                              MOV  IsPowerDown_pre,1
                               MOV  PowerDown_X,DX
                               MOV  PowerDown_Y,AX
                               CALL Draw_PowerDown
@@ -490,6 +516,47 @@ Move_Paddle endp
     
                   
            
+clear_Paddle PROC
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+               
+
+    ; the coordinates of the paddle
+	                 
+                              MOV  CX,Paddle_X
+                              MOV  DX,Paddle_Y
+	                 	                 
+		
+    clear_Paddle_hori:        
+                              MOV  BX,width_Paddle
+	                 
+ 	
+    clear_Paddle_ver:         
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00
+                              PUSH BX
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              POP  BX
+                              DEC  BL
+                              JNZ  clear_Paddle_ver
+                              MOV  CX,Paddle_X
+                              INC  DX
+                              CMP  DX,199
+                              JNZ  clear_Paddle_hori
+	    
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+                           
+                              RET
+clear_Paddle endp
+
 Draw_Paddle PROC
                               push DX
                               push CX
@@ -603,11 +670,11 @@ Move_Power_UP PROC
                               RET
 
     NOT_COLLIDE_POWERUP:      
-                              MOV  IsPowerUp,0
+                              MOV  IsPowerUp_pre,0
                               POP  AX
                               RET
     COLLIDE_POWERUP:          
-                              MOV  IsPowerUp,0
+                              MOV  IsPowerUp_pre,0
                               CALL Duplicate_Paddle_Size     ;Power up
                               POP  AX
                               RET
@@ -641,11 +708,11 @@ Move_Power_Down PROC
                               RET
 
     NOT_COLLIDE_POWERDOWN:    
-                              MOV  IsPowerDown,0
+                              MOV  IsPowerDown_pre,0
                               POP  AX
                               RET
     COLLIDE_POWERDOWN:        
-                              MOV  IsPowerDown,0
+                              MOV  IsPowerDown_pre,0
                               CALL Duplicate_Paddle_Size     ;Power up
                               POP  AX
                               RET
@@ -654,6 +721,49 @@ Move_Power_Down endp
     ;;;;;;;
 
     
+Clear_PowerUp PROC
+    
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+
+
+                              MOV  CX,PowerUp_X
+                              MOV  DX,PowerUp_Y
+    
+    ClearUP_hori:             
+                              MOV  BX,PowerUpWidth
+	                      
+ 	
+    ClearUP_ver:              
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00H                    ; Green Shape
+                              PUSH BX
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              POP  BX
+                              DEC  BX
+                              JNZ  ClearUP_ver
+                              MOV  CX,PowerUp_X
+                              INC  DX
+                              MOV  AX,PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              CMP  DX,AX
+                              JNZ  ClearUP_hori
+
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+
+                              RET
+Clear_PowerUp ENDP
+
+
+
 Draw_PowerUp PROC
     
                               push DX
@@ -696,6 +806,48 @@ Draw_PowerUp PROC
 Draw_PowerUp ENDP
 
     
+Clear_PowerDown PROC
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+
+
+                              MOV  CX,PowerDown_X
+                              MOV  DX,PowerDown_Y
+    
+    ClearDown_hori:           
+                              MOV  BX,PowerDownWidth
+	                      
+ 	
+    ClearDown_ver:            
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00H                    ; Black Shape
+                              PUSH BX
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              POP  BX
+                              DEC  BX
+                              JNZ  ClearDown_ver
+                              MOV  CX,PowerDown_X
+                              INC  DX
+                              MOV  AX,PowerDown_Y
+                              ADD  AX,PowerDownHeight
+                              CMP  DX,AX
+                              JNZ  ClearDown_hori
+
+
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+
+                              RET
+Clear_PowerDown ENDP
+
+
 Draw_PowerDown PROC
                               push DX
                               push CX
@@ -736,6 +888,115 @@ Draw_PowerDown PROC
 
                               RET
 Draw_PowerDown ENDP
+
+
+Clear_UP_ARROW PROC
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+                              
+                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerUpWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              ADD  DX,2
+    
+    loopUp_Clear:                                            ; Clear the first line in the first arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00H
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              INC  DX
+                              MOV  AX, PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              SUB  AX, 3
+                              CMP  DX,AX
+                              JB   loopUp_Clear
+                            
+                            
+                            
+                                    
+                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerUpWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              ADD  DX,2
+    
+    loopUpInv_Clear:                                         ; Clear the second line in the first arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00H
+                              MOV  BH,00
+                              INT  10h
+                              DEC  CX
+                              INC  DX
+                              MOV  AX, PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              SUB  AX, 3
+                              CMP  DX,AX
+                              JB   loopUpInv_Clear
+                           
+                           
+                           
+     
+                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerUpWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerUp_Y              ; Set  Y position to the vertex of the arrow
+                              ADD  DX,4
+    
+    loopUp2_Clear:                                           ; Clear the first line in the second arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00H
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              INC  DX
+                              MOV  AX, PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              SUB  AX, 5
+                              CMP  DX,AX
+                              JB   loopUp2_Clear
+                            
+                            
+                            
+   
+                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerUpWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              ADD  DX,4
+    
+    loopUpInv2_Clear:                                        ; Clear the second line in the second arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00H
+                              MOV  BH,00
+                              INT  10h
+                              DEC  CX
+                              INC  DX
+                              MOV  AX, PowerUp_Y
+                              ADD  AX,PowerUpHeight
+                              SUB  AX, 5
+                              CMP  DX,AX
+                              JB   loopUpInv2_Clear
+                           
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+        
+                              RET
+Clear_UP_ARROW ENDP
+
 
 
 DRAW_UP_ARROW PROC
@@ -845,6 +1106,121 @@ DRAW_UP_ARROW PROC
                               RET
 DRAW_UP_ARROW ENDP
   
+ 
+Clear_DOWN_ARROW PROC
+    
+                              push DX
+                              push CX
+                              PUSH AX
+                              PUSH BX
+    
+                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerDownHeight
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  AX,PowerDownHeight
+                              SUB  AX,2
+                              ADD  DX,AX
+    
+    loopDown_Clear:                                          ; Clear the first line in the first arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00H
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              DEC  DX
+                              MOV  AX, PowerDown_Y
+                              ADD  AX, 3
+                              CMP  DX,AX
+                              JG   loopDown_Clear
+                            
+                            
+                            
+                            
+                            
+                            
+                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerDownWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  AX,PowerDownHeight
+                              SUB  AX,2
+                              ADD  DX,AX
+    
+    loopDownInv_Clear:                                       ; Clear the second line in the first arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00 H
+                              MOV  BH,00
+                              INT  10h
+                              DEC  CX
+                              DEC  DX
+                              MOV  AX, PowerDown_Y
+                              ADD  AX, 3
+                              CMP  DX,AX
+                              JG   loopDownInv_Clear
+                     
+              
+                 
+                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerDownWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  AX,PowerDownHeight
+                              SUB  AX,4
+                              ADD  DX,AX
+                     
+                           
+                           
+    loopDown2_Clear:                                         ; Clear the first line in the second arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00 H
+                              MOV  BH,00
+                              INT  10h
+                              INC  CX
+                              DEC  DX
+                              MOV  AX, PowerDown_Y
+                              ADD  AX, 4
+                              CMP  DX,AX
+                              JG   loopDown2_Clear
+                            
+                            
+                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  DX,PowerDownWidth
+                              SHR  DX,1
+                              ADD  CX,DX
+                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  AX,PowerDownHeight
+                              SUB  AX,4
+                              ADD  DX,AX
+    
+    loopDownInv2_Clear:                                      ; Clear the second line in the second arrow
+    ; AL = Color, BH = Page Number, CX = x, DX = y
+                              MOV  AH,0CH
+                              MOV  AL,00 H
+                              MOV  BH,00
+                              INT  10h
+                              DEC  CX
+                              DEC  DX
+                              MOV  AX, PowerDown_Y
+                              ADD  AX, 4
+                              CMP  DX,AX
+                              JG   loopDownInv2_Clear
+                           
+                              POP  BX
+                              POP  AX
+                              pop  CX
+                              pop  DX
+
+                              RET
+       
+Clear_DOWN_ARROW ENDP
+ 
  
 DRAW_DOWN_ARROW PROC
     
