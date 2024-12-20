@@ -2,119 +2,146 @@
 .STACK 4000
 .DATA
 
-    MAX_WIDTH                 DW              140H                                  ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT                 DW              0C8H                                  ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
+    MAX_WIDTH                 DW  140H                                    ;THE WIDTH OF THE WINDOW
+    MAX_HIGHT                 DW  0C8H                                    ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
 
-    BALL_POSITION_X           DW              0A0H                                  ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y           DW              64H                                   ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE                 EQU             05H                                   ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
+    BALL_POSITION_X           DW  0A0H                                    ;X POSITION OF THE BALL COLUMNNN
+    BALL_POSITION_Y           DW  64H                                     ;Y POSITION OF THE BALL ROWWWWWW
+    BALL_SIZE                 EQU 05H                                     ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
 
-    PREV_TIME                 DB              0                                     ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED                DB              7H                                    ;TO CONTROLL THE SPEED OF THE BALL
+    PREV_TIME                 DB  0                                       ;USED TO CHECK IF THE TIME HAS CHANGED
+    BALL_SPEED                DB  7H                                      ;TO CONTROLL THE SPEED OF THE BALL
 
-    BALL_SPEED_Y              DW              5H                                    ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X              DW              2H
+    BALL_SPEED_Y              DW  5H                                      ;THE SPEED OF THE BALL IN Y DIRECTION
+    BALL_SPEED_X              DW  2H
 
-    BALL_COLOR                DB              0FH                                   ;RED COLOR  CHANGED TO WHITE TO HANDLE THE COLLISIONS
+    BALL_COLOR                DB  0FH                                     ;RED COLOR  CHANGED TO WHITE TO HANDLE THE COLLISIONS
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Paddle var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle              DW              50d
-    height_Paddle             DW              4d
+    width_Paddle              DW  50d
+    height_Paddle             DW  4d
 
-    Paddle_Color              DB              0FH
-    Paddle_Speed              DW              6
+    Paddle_Color              DB  0FH
+    Paddle_Speed              DW  6
 
-    Paddle_X                  DW              135D
-    Paddle_Y                  DW              196D
+    Paddle_X                  DW  135D
+    Paddle_Y                  DW  196D
 
-    LeftBoundry               DW              265
-    RightBoundry              DW              6
+    LeftBoundry               DW  265
+    RightBoundry              DW  6
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerUp var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    PowerUpWidth              DW              10d
-    PowerUpHeight             DW              10d
+    PowerUpWidth              DW  10d
+    PowerUpHeight             DW  10d
 
-    PowerUP_Speed             DW              1
+    PowerUP_Speed             DW  1
 
-    PowerUp_X                 DW              135D
-    PowerUp_Y                 DW              155D
+    PowerUp_X                 DW  135D
+    PowerUp_Y                 DW  155D
 
-    IsPowerUp                 DW              0
-    IsPowerUp_pre             DW              0
-    Points                    DB              0
+    IsPowerUp                 DW  0
+    IsPowerUp_pre             DW  0
+    Points                    DB  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerDown var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    PowerDownWidth            DW              10d
-    PowerDownHeight           DW              10d
+    PowerDownWidth            DW  10d
+    PowerDownHeight           DW  10d
 
  
-    PowerDown_Speed           DW              1
+    PowerDown_Speed           DW  1
 
-    PowerDown_X               DW              135D
-    PowerDown_Y               DW              155D
-    IsPowerDown               DW              0
-    IsPowerDown_pre           DW              0
+    PowerDown_X               DW  135D
+    PowerDown_Y               DW  155D
+    IsPowerDown               DW  0
+    IsPowerDown_pre           DW  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Breaks var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;size for each brick
-    BRICK_WIDTH               EQU             35
-    BRICK_HEIGHT              EQU             8
+    BRICK_WIDTH               EQU 35
+    BRICK_HEIGHT              EQU 8
 
     ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS             EQU             14
-    FIRST_COL_POS             EQU             1
+    FIRST_ROW_POS             EQU 14
+    FIRST_COL_POS             EQU 1
 
-    BRICKS_PER_ROW            EQU             8                                     ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS                EQU             4                                     ; NUMBER OF ROWS
+    BRICKS_PER_ROW            EQU 8                                       ; NUMBER OF BRICKS IN EACH ROW
+    TOTAL_ROWS                EQU 4                                       ; NUMBER OF ROWS
 
-    STEP_PER_ROW              EQU             40                                    ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL              EQU             12                                    ;(BRICK_WIDTH+1PX SPACE)
+    STEP_PER_ROW              EQU 40                                      ;(BRICK_WIDTH+1PX SPACE)
+    STEP_PER_COL              EQU 12                                      ;(BRICK_WIDTH+1PX SPACE)
 
-    COLOR_MATRIX              db              11 dup (1,2,3)                        ; EACH Brick must have certain color here
+    COLOR_MATRIX              db  11 dup (1,2,3)                          ; EACH Brick must have certain color here
 
 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW                       dw              FIRST_ROW_POS
-    COL                       dw              FIRST_COL_POS
-    CRNT_BRICK                dW              0                                     ;counter used to draw each brick with its coressponding color
+    ROW                       dw  FIRST_ROW_POS
+    COL                       dw  FIRST_COL_POS
+    CRNT_BRICK                dW  0                                       ;counter used to draw each brick with its coressponding color
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Stats var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    TEXT_GAME_OVER_PLAY_AGAIN db              'GAME OVER! PLAY AGAIN? (Y/N)','$'
-    TEXT_SCORE                db              'SCORE: $'
-    TEXT_LIVES                db              'LIVES: $'
-    SCORE                     db              0
-    LIVES                     db              3
-    SCORE_CURSOR_X            db              8
-    SCORE_MAX_WIDTH           db              3
+    TEXT_GAME_OVER_PLAY_AGAIN db  'GAME OVER! PLAY AGAIN? (Y/N)','$'
+    TEXT_SCORE                db  'SCORE: $'
+    TEXT_LIVES                db  'LIVES: $'
+    SCORE                     db  0
+    LIVES                     db  3
+    SCORE_CURSOR_X            db  8
+    SCORE_MAX_WIDTH           db  3
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;WELCOME PAGE VARIABLES
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    WELCOME                   DB  'WELCOME TO BRICK BREAKER GAME', '$'
+    WELCOME_OPTION_CHAT       DB  'CHAT','$'
+    WELCOME_OPTION_PLAY       DB  'PLAY','$'
+    WELCOME_ARROW             DB  '>','$'
+    WELCOME_EXIT              DB  'EXIT','$'
+    SELECTOR                  DB  1
+    ARROW_COLOR               DB  09H
+    ARROW_ROW                 DB  09H
 
 .CODE
 
 MAIN PROC FAR
 
                               MOV  AX, @DATA
-                              MOV  DS, AX                    ;MOVING DATA TO DATA SEGNMENT
+                              MOV  DS, AX                     ;MOVING DATA TO DATA SEGNMENT
 
-                              mov  ax, 0A000h                ; Video memory segment for mode 13h
-                              mov  es, ax                    ; Set ES to point to video memory
+                              mov  ax, 0A000h                 ; Video memory segment for mode 13h
+                              mov  es, ax                     ; Set ES to point to video memory
                               MOV  AH, 00H
-                              MOV  AL, 13H                   ;CHOOSE THE VIDEO MODE
+                              MOV  AL, 13H                    ;CHOOSE THE VIDEO MODE
                               INT  10H
 
                               CALL CLEARING_SCREEN
+                              CALL DRAW_WELCOME_SCREEN
+
+                              MOV  AL, 3
+                              CMP  SELECTOR, AL
+                              JE   EXIT
+
+                              MOV AL, 1
+                              CMP SELECTOR, AL
+                              JE GAME
+
+    EXIT:   MOV AH, 4CH
+            INT 21H
+
+
+            GAME:
+
+                              CALL CLEARING_SCREEN            ;TO CLEAR THE SCREEN
     ; CALL Move_Paddle
 
-    TIME_AGAIN:               MOV  AH, 2CH                   ;GET THE SYSTEM TIME
-                              INT  21H                       ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
+    TIME_AGAIN:               MOV  AH, 2CH                    ;GET THE SYSTEM TIME
+                              INT  21H                        ;CH = HOURS, CL = MINUTES, DH = SECONDS AND DL = 1/100 SECONDS
 
-                              MOV  AL, DL                    ;TO AVOID MEMORY TO MEMORY COMMAND
-                              CMP  AL, PREV_TIME             ;COMPARE THE PREVSE TIME WITH THE CURENT
+                              MOV  AL, DL                     ;TO AVOID MEMORY TO MEMORY COMMAND
+                              CMP  AL, PREV_TIME              ;COMPARE THE PREVSE TIME WITH THE CURENT
                               JE   TIME_AGAIN
 
 
@@ -122,9 +149,9 @@ MAIN PROC FAR
     ;   CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
 
 
-                              CMP  IsPowerUp,0               ; CHECK IF THERE IS A POWERUP
+                              CMP  IsPowerUp,0                ; CHECK IF THERE IS A POWERUP
                               JE   CHWCK_POWERDOWN
-                              CMP  IsPowerUp_pre,0           ; CHECK IF THERE IS A POWERUP
+                              CMP  IsPowerUp_pre,0            ; CHECK IF THERE IS A POWERUP
                               JE   CHECK_PRE_UP
                               CALL Clear_PowerUp
                               CALL Clear_UP_ARROW
@@ -139,9 +166,9 @@ MAIN PROC FAR
 
 
     CHWCK_POWERDOWN:          
-                              CMP  IsPowerDown,0             ; CHECK IF THERE IS A POWERDOWN
+                              CMP  IsPowerDown,0              ; CHECK IF THERE IS A POWERDOWN
                               JE   CONT
-                              CMP  IsPowerDown_pre,0         ; CHECK IF THERE IS A POWERD   OWN
+                              CMP  IsPowerDown_pre,0          ; CHECK IF THERE IS A POWERD   OWN
                               JE   CHECK_PRE_DOWN
                               CALL Clear_PowerDown
                               CALL Clear_DOWN_ARROW
@@ -157,16 +184,16 @@ MAIN PROC FAR
 
 
     CONT:                     
-                              ;CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
-                              CALL DRAW_ALL_BRICKS           ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                              CALL DRAWING_BALL              ;DRAWING BALL
-                              CALL DISPLAY_STATS             ;DISPLAY STATS
-                              CALL DRAW_WHITE_LINE           ;DRAW WHITE LINE TO SEPARATE THE STATS FROM THE GAME
+    ;CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
+                              CALL DRAW_ALL_BRICKS            ;DRAW ALL BRICKS ACCORDING TO CONFIGS
+                              CALL DRAWING_BALL               ;DRAWING BALL
+                              CALL DISPLAY_STATS              ;DISPLAY STATS
+                              CALL DRAW_WHITE_LINE            ;DRAW WHITE LINE TO SEPARATE THE STATS FROM THE GAME
                               CALL clear_Paddle
                               CALL Move_Paddle
                               CALL Draw_Paddle
                               CALL MOVING_BALL
-                              CALL HANDLE_COLLISION          ;HANDLE COLLISIONS WITH BRICK
+                              CALL HANDLE_COLLISION           ;HANDLE COLLISIONS WITH BRICK
 
 
     ;    CALL Duplicate_Paddle_Velocity    ;Power up
@@ -177,6 +204,7 @@ MAIN PROC FAR
                               JMP  TIME_AGAIN
 
 
+
                               RET
 MAIN ENDP
 
@@ -184,42 +212,312 @@ MAIN ENDP
 
 CLEARING_SCREEN PROC
 
-                              MOV  AH, 06H                   ;SCROLL UP
-                              XOR  AL, AL                    ;CLEAR ENTIRE SCREEN
-                              XOR  CX, CX                    ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
-                              MOV  DX, 184FH                 ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
-                              MOV  BH, 00H                   ;BLACK COLOR
-                              INT  10H                       ;CLEAR THE SCREEN
+                              MOV  AH, 06H                    ;SCROLL UP
+                              XOR  AL, AL                     ;CLEAR ENTIRE SCREEN
+                              XOR  CX, CX                     ;CH = ROW, CL = COLUMN (FROM UPPER LEFT CORNER)
+                              MOV  DX, 184FH                  ;DH = ROW, DL = COLUMN (TO LOWER RIGHT CORNER)
+                              MOV  BH, 00H                    ;BLACK COLOR
+                              INT  10H                        ;CLEAR THE SCREEN
 
 
                               RET
 CLEARING_SCREEN ENDP
 
+DRAW_WELCOME_ARROW PROC
+
+
+                              MOV  AH, 02H                    ;SET CURSOR POSITION
+                              MOV  BH, 00                     ;PAGE NUMBER
+                              MOV  DH, ARROW_ROW              ;ROW
+                              MOV  DL, 10H                    ;COLUMN
+                              INT  10H                        ;EXECUTE
+
+                              MOV  AH, 09H
+                              MOV  BH, 00
+                              MOV  BL, ARROW_COLOR
+                              MOV  CX, 1
+                              MOV  AL, WELCOME_ARROW
+                              INT  10h
+
+
+                              RET
+DRAW_WELCOME_ARROW ENDP
+
+
+MOVE_WELCOME_ARROW PROC
+
+
+    MOVE:                     
+                              MOV  AH, 00
+                              INT  16H                        ; GET KEY PRESSED
+
+                              CMP  AH, 48H                    ; IF UP
+                              JE   UP_PRESS
+
+                              CMP  AH, 50H                    ; IF DOWN
+                              JE   DOWN_PRESS
+
+                              CMP  AH, 0DH                    ; IF ENTER
+                              RET
+
+
+
+    UP_PRESS:                 
+                              DEC  SELECTOR
+                              MOV  AL, 1
+                              CMP  SELECTOR, AL
+                              JAE  UP_ARROW
+
+                              INC  SELECTOR
+                              JMP  MOVE
+
+    UP_ARROW:                 
+    ;IF SELECTOR IS 0   ===> 09
+                              MOV  AL, 1
+                              CMP  SELECTOR, AL
+                              JE   FIRST_ROW                  ; CLEAR SECOND AND DRAW FIRST
+                              MOV  AL, 2
+                              CMP  SELECTOR, AL
+                              JE   SECOND_ROW                 ; CLEAR THIRD AND DRAW SECOND
+
+    FIRST_ROW:                
+                              MOV  AL, 00                     ; COLOR BLACK TO THE ARROW IN SECOND ROW
+                              MOV  ARROW_COLOR, AL
+                              MOV  AL, 0CH
+                              MOV  ARROW_ROW, AL              ; THE SECOND ROW
+                              CALL DRAW_WELCOME_ARROW
+
+                              MOV  AL, 09                     ; COLOR BLUE TO THE ARROW IN FIRST ROW
+                              MOV  ARROW_COLOR, AL
+                              MOV  AL, 09H
+                              MOV  ARROW_ROW, AL              ; THE FIRST ROW
+                              CALL DRAW_WELCOME_ARROW
+                              JMP  MOVE
+
+
+    SECOND_ROW:               
+                              MOV  AL, 00                     ; COLOR BLACK TO THE ARROW IN SECOND ROW
+                              MOV  ARROW_COLOR, AL
+                              MOV  AL, 0FH
+                              MOV  ARROW_ROW, AL              ; THE SECOND ROW
+                              CALL DRAW_WELCOME_ARROW
+
+                              MOV  AL, 09                     ; COLOR BLUE TO THE ARROW IN FIRST ROW
+                              MOV  ARROW_COLOR, AL
+                              MOV  AL, 0CH
+                              MOV  ARROW_ROW, AL              ; THE FIRST ROW
+                              CALL DRAW_WELCOME_ARROW
+                              JMP  MOVE
+
+    DOWN_PRESS:               
+
+                              INC  SELECTOR
+                              MOV  AL, 3
+                              CMP  SELECTOR, AL
+                              JBE  DOWN_ARROW
+
+
+                              DEC  SELECTOR
+                              JMP  MOVE
+
+    DOWN_ARROW:               
+    ; IF SELECTOR == 2 MOVE TO THIRD ROW AND CLEAR THE SECOND
+                              MOV  AL, 3
+                              CMP  SELECTOR, AL
+                              JE   DOWN_THIRD_ROW             ;JUMP TO THERID AND CLEAR THE SECOND
+
+                              MOV  AL, 2
+                              CMP  SELECTOR, AL
+                              JE   DOWN_SECOND_ROW            ;JUMP TO SECOND AND CLEAR FIRST
+
+
+    DOWN_SECOND_ROW:          
+                              MOV  AL, 09H
+                              MOV  ARROW_ROW, AL              ; THE FIRST ROW
+                              MOV  AL, 00H
+                              MOV  ARROW_COLOR, AL            ; THE BLACK COLOR
+                              CALL DRAW_WELCOME_ARROW         ; CLEAR FIRST ROW
+
+                              MOV  AL, 0CH
+                              MOV  ARROW_ROW, AL              ; THE SECOND ROW
+                              MOV  AL, 09H
+                              MOV  ARROW_COLOR, AL            ; THE BLUE COLOR
+                              CALL DRAW_WELCOME_ARROW         ; MOVE TO SECOND ROW
+                              JMP  MOVE
+
+    DOWN_THIRD_ROW:           
+                              MOV  AL, 0CH
+                              MOV  ARROW_ROW, AL              ; THE SECOND ROW
+                              MOV  AL, 00H
+                              MOV  ARROW_COLOR, AL            ; THE BLACK COLOR
+                              CALL DRAW_WELCOME_ARROW         ; CLEAR SECOND ROW
+
+                              MOV  AL, 0FH
+                              MOV  ARROW_ROW, AL              ; THE THERID ROW
+                              MOV  AL, 09H
+                              MOV  ARROW_COLOR, AL            ; THE BLUE COLOR
+                              CALL DRAW_WELCOME_ARROW         ; MOVE TO THIRD ROW
+                              JMP  MOVE
+
+
+
+                              RET
+MOVE_WELCOME_ARROW ENDP
+
+DRAW_WELCOME_SCREEN PROC
+
+    ; PRINT WELCOME
+
+                              MOV  AH, 02H                    ;SET CURSOR POSITION
+                              MOV  BH, 00                     ;PAGE NUMBER
+                              MOV  DH, 04                     ;ROW
+                              MOV  DL, 05                     ;COLUMN
+                              INT  10H                        ;EXECUTE
+
+
+                              LEA  SI, WELCOME                ; Load string address into SI
+
+    PRINT_WELCOME:            MOV  AH, 09H
+                              MOV  BL, 09H
+                              MOV  AL, BYTE PTR [SI]          ; Load character
+                              CMP  AL, '$'                    ; Check for end of string
+                              JE   PRINT1                   ; If '$', exit loop
+                              MOV  CX, 1                      ; NO OF CHARACTERS
+                              INT  10H                        ; EXECUTE
+                              INC  SI                         ; Move to next character
+
+                              INC  DL
+                              MOV  BH, 00
+                              MOV  DH, 04
+                              MOV  AH, 02H
+                              INT  10H
+                              JMP  PRINT_WELCOME              ; Repeat for next character
+
+
+    ;PRINT GO TO CHAT
+
+    PRINT1:                 
+
+
+                              CALL DRAW_WELCOME_ARROW
+
+
+                              MOV  AH, 02H                    ;SET CURSOR POSITION
+                              MOV  BH, 00                     ;PAGE NUMBER
+                              MOV  DH, 09                     ;ROW
+                              MOV  DL, 12H                    ;COLUMN
+                              INT  10H                        ;EXECUTE
+                              LEA  SI, WELCOME_OPTION_PLAY
+
+    PRINT_PLAY:               MOV  AH, 09H
+                              MOV  BL, 0FH
+                              MOV  AL, BYTE PTR [SI]          ; Load character
+                              CMP  AL, '$'                    ; Check for end of string
+                              JE   PRINT2                  ; If '$', exit loop
+                              MOV  CX, 1                      ; NO OF CHARACTERS
+                              INT  10H                        ; EXECUTE
+                              INC  SI                         ; Move to next character
+
+                              INC  DL                         ;INC CURSOR POSITION
+                              MOV  BH, 00
+                              MOV  DH, 09
+                              MOV  AH, 02H
+                              INT  10H
+                              JMP  PRINT_PLAY                 ; Repeat for next character
+
+
+    PRINT2:                
+
+                              MOV  AH, 02H                    ;SET CURSOR POSITION
+                              MOV  BH, 00                     ;PAGE NUMBER
+                              MOV  DH, 0CH                    ;ROW
+                              MOV  DL, 12H                    ;COLUMN
+                              INT  10H                        ;EXECUTE
+                              LEA  SI, WELCOME_OPTION_CHAT
+   
+    PRINT_CHAT:               MOV  AH, 09H
+                              MOV  BL, 0FH
+                              MOV  AL, BYTE PTR [SI]          ; Load character
+                              CMP  AL, '$'                    ; Check for end of string
+                              JE   PRINT4                  ; If '$', exit loop
+                              MOV  CX, 1                      ; NO OF CHARACTERS
+                              INT  10H                        ; EXECUTE
+                              INC  SI                         ; Move to next character
+
+                              INC  DL                         ;INC CURSOR POSITION
+                              MOV  BH, 00
+                              MOV  DH, 0CH
+                              MOV  AH, 02H
+                              INT  10H
+                              JMP  PRINT_CHAT                 ; Repeat for next character
+
+
+    PRINT4:                
+
+                              MOV  AH, 02H                    ;SET CURSOR POSITION
+                              MOV  BH, 00                     ;PAGE NUMBER
+                              MOV  DH, 0FH                    ;ROW
+                              MOV  DL, 12H                    ;COLUMN
+                              INT  10H                        ;EXECUTE
+                              LEA  SI, WELCOME_EXIT
+   
+    PRINT_EXIT:               MOV  AH, 09H
+                              MOV  BL, 0FH
+                              MOV  AL, BYTE PTR [SI]          ; Load character
+                              CMP  AL, '$'                    ; Check for end of string
+                              JE   DORET                      ; If '$', exit loop
+                              MOV  CX, 1                      ; NO OF CHARACTERS
+                              INT  10H                        ; EXECUTE
+                              INC  SI                         ; Move to next character
+
+                              INC  DL                         ;INC CURSOR POSITION
+                              MOV  BH, 00
+                              MOV  DH, 0FH
+                              MOV  AH, 02H
+                              INT  10H
+                              JMP  PRINT_EXIT                 ; Repeat for next character
+
+
+
+    DORET:                    
+
+                              MOV  AH, 01H
+                              INT  16H                        ;CHECK FOR KEY PRESS
+                              JNZ  MOVE_WA                    ; MOVE WELCOME ARROW
+
+    MOVE_WA:                  
+                              CALL MOVE_WELCOME_ARROW
+
+
+                              RET
+DRAW_WELCOME_SCREEN ENDP
+
+
 
 MOVING_BALL PROC
                               PUSH AX
                               MOV  AX, BALL_SPEED_Y
-                              SUB  BALL_POSITION_Y, AX       ;MOVE THE BALL UP
+                              SUB  BALL_POSITION_Y, AX        ;MOVE THE BALL UP
 
-                              CMP  BALL_POSITION_Y, 15       ;CHECK IF Y < 15 (THE HIGHT OF THE WINDOW)
-                              JL   REVERSE_Y                 ;IF Y < 15 REVERSE THE DIRECTION OF MOVING
+                              CMP  BALL_POSITION_Y, 15        ;CHECK IF Y < 15 (THE HIGHT OF THE WINDOW)
+                              JL   REVERSE_Y                  ;IF Y < 15 REVERSE THE DIRECTION OF MOVING
 
                               MOV  AX, MAX_HIGHT
                               SUB  AX, BALL_SIZE
-                              CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
-                              JG   HANDEL_LOSE_LIFE          ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
+                              CMP  BALL_POSITION_Y, AX        ;CHECK IF Y > MAX HIGHT
+                              JG   HANDEL_LOSE_LIFE           ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
                               
 
                               MOV  AX, BALL_SPEED_X
-                              ADD  BALL_POSITION_X, AX       ;MOV RIGHT
+                              ADD  BALL_POSITION_X, AX        ;MOV RIGHT
 
-                              CMP  BALL_POSITION_X, 0        ;CHECK IF X < 0
-                              JL   REVERSE_X                 ;IF X < 0 REVERSE THE DIRECTION
+                              CMP  BALL_POSITION_X, 0         ;CHECK IF X < 0
+                              JL   REVERSE_X                  ;IF X < 0 REVERSE THE DIRECTION
 
                               MOV  AX, MAX_WIDTH
                               SUB  AX, BALL_SIZE
-                              CMP  BALL_POSITION_X, AX       ;CHECK IF x > MAX WIDTH - BALL SIZE
-                              JG   REVERSE_X                 ;REVERSE IF GREATER
+                              CMP  BALL_POSITION_X, AX        ;CHECK IF x > MAX WIDTH - BALL SIZE
+                              JG   REVERSE_X                  ;REVERSE IF GREATER
 
 
     ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
@@ -227,13 +525,13 @@ MOVING_BALL PROC
                               MOV  AX,Paddle_X
                               SUB  AX, BALL_SIZE
                               ADD  AX,BALL_SPEED_X
-                              CMP  BALL_POSITION_X,AX        ;; Check x -->Start
+                              CMP  BALL_POSITION_X,AX         ;; Check x -->Start
                               JB   NOT_COLLIDE
 
                               ADD  AX,width_Paddle
                               SUB  AX, BALL_SIZE
                               ADD  AX,BALL_SPEED_X
-                              CMP  BALL_POSITION_X,AX        ;; Check x -->End
+                              CMP  BALL_POSITION_X,AX         ;; Check x -->End
                               JG   NOT_COLLIDE
 
     CHECK_Y:                  
@@ -241,7 +539,7 @@ MOVING_BALL PROC
                               MOV  AX, Paddle_Y
                               SUB  AX, BALL_SIZE
                               ADD  AX,BALL_SPEED_Y
-                              CMP  BALL_POSITION_Y, AX       ;CHECK IF Y > MAX HIGHT
+                              CMP  BALL_POSITION_Y, AX        ;CHECK IF Y > MAX HIGHT
                               JGE  REVERSE_Y
 
     NOT_COLLIDE:              
@@ -252,10 +550,10 @@ MOVING_BALL PROC
                               RET
 
     REVERSE_Y:                NEG  BALL_SPEED_Y
-                              POP  AX                        ;REVERSE THE DIRECTION OF SPEED IN Y
+                              POP  AX                         ;REVERSE THE DIRECTION OF SPEED IN Y
                               RET
 
-    REVERSE_X:                NEG  BALL_SPEED_X              ;REVERSE THE DIRECTION OF SPEED IN Y
+    REVERSE_X:                NEG  BALL_SPEED_X               ;REVERSE THE DIRECTION OF SPEED IN Y
                               POP  AX
                               RET
     HANDEL_LOSE_LIFE:         CALL Lose_Life
@@ -271,12 +569,12 @@ HANDLE_COLLISION PROC
                               ADD  AX,BALL_SIZE
                               MOV  BX,320
                               MUL  BX
-                              ADD  AX,BALL_POSITION_X        ;AX=ROWS*320+COLS
+                              ADD  AX,BALL_POSITION_X         ;AX=ROWS*320+COLS
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
-                              CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              CMP  ES:[SI],DL                 ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   X1
-                              CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              CMP  ES:[SI], BYTE PTR  0       ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
                               JNZ  .REVERSE_Y
 
     ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
@@ -287,9 +585,9 @@ HANDLE_COLLISION PROC
                               ADD  AX,BALL_POSITION_X
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
-                              CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              CMP  ES:[SI],DL                 ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   X2
-                              CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              CMP  ES:[SI], BYTE PTR  0       ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
                               JNZ  .REVERSE_Y
 
     ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
@@ -300,9 +598,9 @@ HANDLE_COLLISION PROC
                               ADD  AX,BALL_SIZE
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
-                              CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              CMP  ES:[SI],DL                 ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   X3
-                              CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              CMP  ES:[SI], BYTE PTR  0       ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
                               JNZ  .REVERSE_Y
     X3:                       MOV  AX,BALL_POSITION_Y
                               MOV  BX,320
@@ -311,16 +609,16 @@ HANDLE_COLLISION PROC
                               SUB  AX,BALL_SIZE
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
-                              CMP  ES:[SI],DL                ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              CMP  ES:[SI],DL                 ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   .RT
-                              CMP  ES:[SI], BYTE PTR  0      ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              CMP  ES:[SI], BYTE PTR  0       ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
                               JNZ  .REVERSE_Y
 
 .RT: RET
 
 .REVERSE_Y:
-                              NEG  BALL_SPEED_Y              ;REVERSE THE DIRECTION OF SPEED IN Y
-                              CALL DESTROY_BRICK             ;DESTROY THE BRICK I COLLIDED WITH
+                              NEG  BALL_SPEED_Y               ;REVERSE THE DIRECTION OF SPEED IN Y
+                              CALL DESTROY_BRICK              ;DESTROY THE BRICK I COLLIDED WITH
                               RET
 HANDLE_COLLISION ENDP
 
@@ -334,7 +632,7 @@ DESTROY_BRICK PROC
                               MOV  DX,0
                               MOV  AX,SI
                               MOV  BX,320
-                              DIV  BX                        ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
+                              DIV  BX                         ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
     ;;;;;;;;;;;;;;;;;;
 
                               PUSH AX
@@ -356,19 +654,19 @@ DESTROY_BRICK PROC
                               MOV  BX,STEP_PER_COL
                               SUB  AX,FIRST_ROW_POS
                               DIV  BX
-                              MOV  BP,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
+                              MOV  BP,AX                      ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
 
                               MOV  DX,0
                               MOV  AX,CX
                               SUB  AX,FIRST_COL_POS
                               MOV  BX,STEP_PER_ROW
                               DIV  BX
-                              MOV  CX,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
+                              MOV  CX,AX                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
                               MOV  AX,BP
                               MOV  BX,BRICKS_PER_ROW
                               MUL  BX
                               ADD  AX,CX
-                              MOV  DI,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;DI IS THE ACTUAL BRICK
+                              MOV  DI,AX                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;DI IS THE ACTUAL BRICK
                               DEC  [COLOR_MATRIX+DI]
                               cmp  [COLOR_MATRIX+DI],0
                               JNZ  Continue
@@ -387,46 +685,46 @@ DESTROY_BRICK ENDP
 DRAWING_BALL PROC
 
                     
-                              MOV  CX, BALL_POSITION_X       ;SET THE COLUMN POSITION OF THE PIXEL
-                              MOV  DX, BALL_POSITION_Y       ;SET THE ROW POSITION OF THE PIXEL
-                              MOV  AL, BALL_COLOR            ;COLOR OF THE PIXEL IS RED
-                              MOV  AH, 0CH                   ;DRAW PIXEL COMMMAND
+                              MOV  CX, BALL_POSITION_X        ;SET THE COLUMN POSITION OF THE PIXEL
+                              MOV  DX, BALL_POSITION_Y        ;SET THE ROW POSITION OF THE PIXEL
+                              MOV  AL, BALL_COLOR             ;COLOR OF THE PIXEL IS RED
+                              MOV  AH, 0CH                    ;DRAW PIXEL COMMMAND
     DRAW_HORIZONTAL:          INT  10H
-                              INC  CX                        ;INCREMENT THE SIZE IN X DIRECTION
-                              MOV  BX, CX                    ;TO PRESERVE THE VALUE IN THE CX
-                              SUB  BX, BALL_POSITION_X       ;GET THE DIFFERENCE
-                              CMP  BX, BALL_SIZE             ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
+                              INC  CX                         ;INCREMENT THE SIZE IN X DIRECTION
+                              MOV  BX, CX                     ;TO PRESERVE THE VALUE IN THE CX
+                              SUB  BX, BALL_POSITION_X        ;GET THE DIFFERENCE
+                              CMP  BX, BALL_SIZE              ;CMPARE THE DIFFERENCE WITH THE BALL SIZE
                               JL   DRAW_HORIZONTAL
 
 
-                              INC  DX                        ;INCREMENT THE SIZE IN THE Y DIRECTION
-                              MOV  CX, BALL_POSITION_X       ;SET THE X DIRECTION AGAIN
+                              INC  DX                         ;INCREMENT THE SIZE IN THE Y DIRECTION
+                              MOV  CX, BALL_POSITION_X        ;SET THE X DIRECTION AGAIN
                               MOV  BX, DX
-                              SUB  BX, BALL_POSITION_Y       ;GET THE DIFFERENCE
+                              SUB  BX, BALL_POSITION_Y        ;GET THE DIFFERENCE
                               CMP  BX, BALL_SIZE
-                              JL   DRAW_HORIZONTAL           ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
-                              RET                            ;ELSE WILL RETURN
+                              JL   DRAW_HORIZONTAL            ;IF THE SIZE IN THE Y DIRECTION NOT COMPLETED WILL GO AGAIN TO DRAW IN THE X DIRECTION
+                              RET                             ;ELSE WILL RETURN
 
 DRAWING_BALL ENDP
 
 DRAW_ALL_BRICKS PROC
-                              MOV  CRNT_BRICK,0              ;INITIALIZE THE BIRCKS COUNTER
-                              MOV  CX,0                      ;INITIALIZE THE COLUMNS COUNTER
-                              MOV  DX,0                      ;INITIALIZE THE ROWS COUNTER
+                              MOV  CRNT_BRICK,0               ;INITIALIZE THE BIRCKS COUNTER
+                              MOV  CX,0                       ;INITIALIZE THE COLUMNS COUNTER
+                              MOV  DX,0                       ;INITIALIZE THE ROWS COUNTER
     DRAWIT:                   
                               CALL DRAWBRICK
                               ADD  COL,STEP_PER_ROW
                               INC  CRNT_BRICK
                               INC  CX
                               CMP  CX,BRICKS_PER_ROW
-                              JL   DRAWIT                    ;(IF CX >= BRICKS_PER_ROW ) BREAK
-                              MOV  CX,0                      ;REINITIALIZE THE COLUMNS COUNTER
+                              JL   DRAWIT                     ;(IF CX >= BRICKS_PER_ROW ) BREAK
+                              MOV  CX,0                       ;REINITIALIZE THE COLUMNS COUNTER
                               INC  DX
-                              MOV  COL,FIRST_COL_POS         ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
+                              MOV  COL,FIRST_COL_POS          ;MOVE TO THE NEXT POSITION TO DRAW THE NEXT BRICK (MOVE TO THE NEXT ROW)
                               ADD  ROW,STEP_PER_COL
                               CMP  DX,TOTAL_ROWS
-                              JL   DRAWIT                    ;(IF DX >= BRICKS_PER_COL ) BREAK
-                              MOV  ROW,FIRST_ROW_POS         ;RESET ROWS & COL TO ITS INITIAL POSITION
+                              JL   DRAWIT                     ;(IF DX >= BRICKS_PER_COL ) BREAK
+                              MOV  ROW,FIRST_ROW_POS          ;RESET ROWS & COL TO ITS INITIAL POSITION
                               MOV  COL,FIRST_COL_POS
                               RET
 DRAW_ALL_BRICKS ENDP
@@ -438,26 +736,26 @@ DRAWBRICK PROC
                               push CX
                               PUSH AX
                               PUSH BX
-                              mov  ax,ROW                    ;==>column number
-                              mov  bx,320                    ;bx=320
-                              mul  bx                        ;ax=ax*bx
-                              add  ax,COL                    ;ax==>in now target pixel to draw
-                              MOV  SI,AX                     ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
+                              mov  ax,ROW                     ;==>column number
+                              mov  bx,320                     ;bx=320
+                              mul  bx                         ;ax=ax*bx
+                              add  ax,COL                     ;ax==>in now target pixel to draw
+                              MOV  SI,AX                      ; CALC THE POSITION OF THE FIRST PIXEL IN THE VIDEO MEMORY
                               MOV  DI,CRNT_BRICK
-                              mov  bl,[COLOR_MATRIX+DI]      ;STORE THE COLOR OF THE CRNT BRICK
-                              mov  cx,0                      ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
-                              mov  dx,0                      ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
-    draw:                     mov  es:[si],bl                ;COLOR THIS PIXEL
-                              inc  si                        ;GO RIGHT
+                              mov  bl,[COLOR_MATRIX+DI]       ;STORE THE COLOR OF THE CRNT BRICK
+                              mov  cx,0                       ;INITIALIZE COLUMNS COUNTER (COUNTER FOR NUMBER OF PIXELS PER ROW PRE BRICK)
+                              mov  dx,0                       ;INITIALIZE ROWS COUNTER (COUNTER FOR NUMBER OF ROWS PRE BRICK)
+    draw:                     mov  es:[si],bl                 ;COLOR THIS PIXEL
+                              inc  si                         ;GO RIGHT
                               inc  CX
                               cmp  cx,BRICK_WIDTH
-                              jl   draw                      ;(IF CX >= BRICKS_WIDTH ) BREAK
-                              add  si,320                    ;GO DOWN (GO TO THE NEXT ROW)
-                              sub  si, BRICK_WIDTH           ;GO TO BACK TO THE START OF THE BRICK
+                              jl   draw                       ;(IF CX >= BRICKS_WIDTH ) BREAK
+                              add  si,320                     ;GO DOWN (GO TO THE NEXT ROW)
+                              sub  si, BRICK_WIDTH            ;GO TO BACK TO THE START OF THE BRICK
                               INC  DX
-                              MOV  CX,0                      ;RESET COLUMNS COUNTER
+                              MOV  CX,0                       ;RESET COLUMNS COUNTER
                               CMP  DX,BRICK_HEIGHT
-                              jl   draw                      ;(IF DX >= BRICK_HEIGHT ) BREAK
+                              jl   draw                       ;(IF DX >= BRICK_HEIGHT ) BREAK
                               POP  BX
                               POP  AX
                               pop  CX
@@ -471,9 +769,9 @@ Move_Paddle PROC
                               PUSH AX
                               PUSH BX
 
-                              MOV  AH, 01h                   ; Function to check if a key is pressed
-                              INT  16h                       ; Call BIOS interrupt
-                              JZ   NoKey                     ; Jump if no key is pressed (ZF = 1)
+                              MOV  AH, 01h                    ; Function to check if a key is pressed
+                              INT  16h                        ; Call BIOS interrupt
+                              JZ   NoKey                      ; Jump if no key is pressed (ZF = 1)
     ; Code to handle key press
                               JMP  Done
 
@@ -487,14 +785,14 @@ Move_Paddle PROC
                               INT  16h
            
     ; Check for left arrow (E0 4B)
-                              CMP  AH, 4Bh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                              JE   left_pressed              ; Jump if Left Arrow
+                              CMP  AH, 4Bh                    ; Compare scancode (AL contains scancode without E0 prefix)
+                              JE   left_pressed               ; Jump if Left Arrow
                   
     ; Check for right arrow (E0 4D)
-                              CMP  AH, 4Dh                   ; Compare scancode (AL contains scancode without E0 prefix)
-                              JE   right_pressed             ; Jump if Right Arrow
+                              CMP  AH, 4Dh                    ; Compare scancode (AL contains scancode without E0 prefix)
+                              JE   right_pressed              ; Jump if Right Arrow
                    
-                              JMP  rett                      ; Return to polling
+                              JMP  rett                       ; Return to polling
                         
     left_pressed:             
                    
@@ -504,7 +802,7 @@ Move_Paddle PROC
                               MOV  AX,RightBoundry
                               CMP  Paddle_X,AX
                               JB   Maintain_Right_Boundry
-                              JMP  rett                      ; Return to polling
+                              JMP  rett                       ; Return to polling
                    
     right_pressed:            
                               MOV  BX,Paddle_Speed
@@ -512,7 +810,7 @@ Move_Paddle PROC
                               MOV  AX,LeftBoundry
                               CMP  Paddle_X,AX
                               JA   Maintain_Left_Boundry
-                              JMP  rett                      ; Return to polling
+                              JMP  rett                       ; Return to polling
      
      	                 
     Maintain_Right_Boundry:   
@@ -672,11 +970,11 @@ Move_Power_UP PROC
 
 
                               MOV  AX,Paddle_Y
-                              SUB  AX, PowerUpHeight         ; check for y-axis
+                              SUB  AX, PowerUpHeight          ; check for y-axis
                               CMP  PowerUp_Y,AX
                               JB   StillAbove
 
-                              MOV  AX,Paddle_X               ; check for x-axis
+                              MOV  AX,Paddle_X                ; check for x-axis
                               CMP  PowerUp_X,AX
                               JB   NOT_COLLIDE_POWERUP
                               ADD  AX,width_Paddle
@@ -685,7 +983,7 @@ Move_Power_UP PROC
                               JMP  NOT_COLLIDE_POWERUP
 
 
-    StillAbove:                                              ; the powerUp is above the paddle
+    StillAbove:                                               ; the powerUp is above the paddle
                               MOV  AX,PowerUp_Speed
                               ADD  PowerUp_Y,AX
                               POP  AX
@@ -697,7 +995,7 @@ Move_Power_UP PROC
                               RET
     COLLIDE_POWERUP:          
                               MOV  IsPowerUp_pre,0
-                              CALL Duplicate_Paddle_Size     ;Power up
+                              CALL Duplicate_Paddle_Size      ;Power up
                               POP  AX
                               RET
 
@@ -710,11 +1008,11 @@ Move_Power_Down PROC
 
 
                               MOV  AX,Paddle_Y
-                              SUB  AX, PowerDownHeight       ; check for y-axis
+                              SUB  AX, PowerDownHeight        ; check for y-axis
                               CMP  PowerDown_Y,AX
                               JB   StillAbove_Down
 
-                              MOV  AX,Paddle_X               ; check for x-axis
+                              MOV  AX,Paddle_X                ; check for x-axis
                               CMP  PowerDown_X,AX
                               JB   NOT_COLLIDE_POWERDOWN
                               ADD  AX,width_Paddle
@@ -723,7 +1021,7 @@ Move_Power_Down PROC
                               JMP  NOT_COLLIDE_POWERDOWN
 
 
-    StillAbove_Down:                                         ; the powerDown is above the paddle
+    StillAbove_Down:                                          ; the powerDown is above the paddle
                               MOV  AX,PowerDown_Speed
                               ADD  PowerDown_Y,AX
                               POP  AX
@@ -735,7 +1033,7 @@ Move_Power_Down PROC
                               RET
     COLLIDE_POWERDOWN:        
                               MOV  IsPowerDown_pre,0
-                              CALL Duplicate_Paddle_Size     ;Power up
+                              CALL Duplicate_Paddle_Size      ;Power up
                               POP  AX
                               RET
 
@@ -761,7 +1059,7 @@ Clear_PowerUp PROC
     ClearUP_ver:              
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,00H                    ; Green Shape
+                              MOV  AL,00H                     ; Green Shape
                               PUSH BX
                               MOV  BH,00
                               INT  10h
@@ -804,7 +1102,7 @@ Draw_PowerUp PROC
     drawUP_ver:               
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,02H                    ; Green Shape
+                              MOV  AL,02H                     ; Green Shape
                               PUSH BX
                               MOV  BH,00
                               INT  10h
@@ -845,7 +1143,7 @@ Clear_PowerDown PROC
     ClearDown_ver:            
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,00H                    ; Black Shape
+                              MOV  AL,00H                     ; Black Shape
                               PUSH BX
                               MOV  BH,00
                               INT  10h
@@ -887,7 +1185,7 @@ Draw_PowerDown PROC
     drawDown_ver:             
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,04H                    ; Red Shape
+                              MOV  AL,04H                     ; Red Shape
                               PUSH BX
                               MOV  BH,00
                               INT  10h
@@ -918,14 +1216,14 @@ Clear_UP_ARROW PROC
                               PUSH AX
                               PUSH BX
                               
-                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerUp_X               ; Set X position to the vertex of the arrow
                               MOV  DX,PowerUpWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerUp_Y               ; Set Y position to the vertex of the arrow
                               ADD  DX,2
     
-    loopUp_Clear:                                            ; Clear the first line in the first arrow
+    loopUp_Clear:                                             ; Clear the first line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,00H
@@ -942,14 +1240,14 @@ Clear_UP_ARROW PROC
                             
                             
                                     
-                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerUp_X               ; Set X position to the vertex of the arrow
                               MOV  DX,PowerUpWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerUp_Y               ; Set Y position to the vertex of the arrow
                               ADD  DX,2
     
-    loopUpInv_Clear:                                         ; Clear the second line in the first arrow
+    loopUpInv_Clear:                                          ; Clear the second line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,00H
@@ -966,14 +1264,14 @@ Clear_UP_ARROW PROC
                            
                            
      
-                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerUp_X               ; Set X position to the vertex of the arrow
                               MOV  DX,PowerUpWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerUp_Y              ; Set  Y position to the vertex of the arrow
+                              MOV  DX,PowerUp_Y               ; Set  Y position to the vertex of the arrow
                               ADD  DX,4
     
-    loopUp2_Clear:                                           ; Clear the first line in the second arrow
+    loopUp2_Clear:                                            ; Clear the first line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,00H
@@ -990,14 +1288,14 @@ Clear_UP_ARROW PROC
                             
                             
    
-                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerUp_X               ; Set X position to the vertex of the arrow
                               MOV  DX,PowerUpWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerUp_Y               ; Set Y position to the vertex of the arrow
                               ADD  DX,4
     
-    loopUpInv2_Clear:                                        ; Clear the second line in the second arrow
+    loopUpInv2_Clear:                                         ; Clear the second line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,00H
@@ -1027,14 +1325,14 @@ DRAW_UP_ARROW PROC
                               PUSH AX
                               PUSH BX
                               
-                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerUp_X               ; Set X position to the vertex of the arrow
                               MOV  DX,PowerUpWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerUp_Y               ; Set Y position to the vertex of the arrow
                               ADD  DX,2
     
-    loopUp_:                                                 ; Draw the first line in the first arrow
+    loopUp_:                                                  ; Draw the first line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,0fH
@@ -1051,14 +1349,14 @@ DRAW_UP_ARROW PROC
                             
                             
                                     
-                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerUp_X               ; Set X position to the vertex of the arrow
                               MOV  DX,PowerUpWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerUp_Y               ; Set Y position to the vertex of the arrow
                               ADD  DX,2
     
-    loopUpInv_:                                              ; Draw the second line in the first arrow
+    loopUpInv_:                                               ; Draw the second line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,0fH
@@ -1075,14 +1373,14 @@ DRAW_UP_ARROW PROC
                            
                            
      
-                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerUp_X               ; Set X position to the vertex of the arrow
                               MOV  DX,PowerUpWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerUp_Y              ; Set  Y position to the vertex of the arrow
+                              MOV  DX,PowerUp_Y               ; Set  Y position to the vertex of the arrow
                               ADD  DX,4
     
-    loopUp2_:                                                ; Draw the first line in the second arrow
+    loopUp2_:                                                 ; Draw the first line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,0fH
@@ -1099,14 +1397,14 @@ DRAW_UP_ARROW PROC
                             
                             
    
-                              MOV  CX,PowerUp_X              ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerUp_X               ; Set X position to the vertex of the arrow
                               MOV  DX,PowerUpWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerUp_Y              ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerUp_Y               ; Set Y position to the vertex of the arrow
                               ADD  DX,4
     
-    loopUpInv2_:                                             ; Draw the second line in the second arrow
+    loopUpInv2_:                                              ; Draw the second line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,0fH
@@ -1136,16 +1434,16 @@ Clear_DOWN_ARROW PROC
                               PUSH AX
                               PUSH BX
     
-                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerDown_X             ; Set X position to the vertex of the arrow
                               MOV  DX,PowerDownHeight
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerDown_Y             ; Set Y position to the vertex of the arrow
                               MOV  AX,PowerDownHeight
                               SUB  AX,2
                               ADD  DX,AX
     
-    loopDown_Clear:                                          ; Clear the first line in the first arrow
+    loopDown_Clear:                                           ; Clear the first line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,00H
@@ -1163,16 +1461,16 @@ Clear_DOWN_ARROW PROC
                             
                             
                             
-                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerDown_X             ; Set X position to the vertex of the arrow
                               MOV  DX,PowerDownWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerDown_Y             ; Set Y position to the vertex of the arrow
                               MOV  AX,PowerDownHeight
                               SUB  AX,2
                               ADD  DX,AX
     
-    loopDownInv_Clear:                                       ; Clear the second line in the first arrow
+    loopDownInv_Clear:                                        ; Clear the second line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,00H
@@ -1187,18 +1485,18 @@ Clear_DOWN_ARROW PROC
                      
               
                  
-                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerDown_X             ; Set X position to the vertex of the arrow
                               MOV  DX,PowerDownWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerDown_Y             ; Set Y position to the vertex of the arrow
                               MOV  AX,PowerDownHeight
                               SUB  AX,4
                               ADD  DX,AX
                      
                            
                            
-    loopDown2_Clear:                                         ; Clear the first line in the second arrow
+    loopDown2_Clear:                                          ; Clear the first line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,00H
@@ -1212,16 +1510,16 @@ Clear_DOWN_ARROW PROC
                               JG   loopDown2_Clear
                             
                             
-                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerDown_X             ; Set X position to the vertex of the arrow
                               MOV  DX,PowerDownWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerDown_Y             ; Set Y position to the vertex of the arrow
                               MOV  AX,PowerDownHeight
                               SUB  AX,4
                               ADD  DX,AX
     
-    loopDownInv2_Clear:                                      ; Clear the second line in the second arrow
+    loopDownInv2_Clear:                                       ; Clear the second line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,00H
@@ -1251,16 +1549,16 @@ DRAW_DOWN_ARROW PROC
                               PUSH AX
                               PUSH BX
     
-                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerDown_X             ; Set X position to the vertex of the arrow
                               MOV  DX,PowerDownHeight
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerDown_Y             ; Set Y position to the vertex of the arrow
                               MOV  AX,PowerDownHeight
                               SUB  AX,2
                               ADD  DX,AX
     
-    loopDown_:                                               ; Draw the first line in the first arrow
+    loopDown_:                                                ; Draw the first line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,0fH
@@ -1278,16 +1576,16 @@ DRAW_DOWN_ARROW PROC
                             
                             
                             
-                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerDown_X             ; Set X position to the vertex of the arrow
                               MOV  DX,PowerDownWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerDown_Y             ; Set Y position to the vertex of the arrow
                               MOV  AX,PowerDownHeight
                               SUB  AX,2
                               ADD  DX,AX
     
-    loopDownInv_:                                            ; Draw the second line in the first arrow
+    loopDownInv_:                                             ; Draw the second line in the first arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,0fH
@@ -1302,18 +1600,18 @@ DRAW_DOWN_ARROW PROC
                      
               
                  
-                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerDown_X             ; Set X position to the vertex of the arrow
                               MOV  DX,PowerDownWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerDown_Y             ; Set Y position to the vertex of the arrow
                               MOV  AX,PowerDownHeight
                               SUB  AX,4
                               ADD  DX,AX
                      
                            
                            
-    loopDown2_:                                              ; Draw the first line in the second arrow
+    loopDown2_:                                               ; Draw the first line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,0fH
@@ -1327,16 +1625,16 @@ DRAW_DOWN_ARROW PROC
                               JG   loopDown2_
                             
                             
-                              MOV  CX,PowerDown_X            ; Set X position to the vertex of the arrow
+                              MOV  CX,PowerDown_X             ; Set X position to the vertex of the arrow
                               MOV  DX,PowerDownWidth
                               SHR  DX,1
                               ADD  CX,DX
-                              MOV  DX,PowerDown_Y            ; Set Y position to the vertex of the arrow
+                              MOV  DX,PowerDown_Y             ; Set Y position to the vertex of the arrow
                               MOV  AX,PowerDownHeight
                               SUB  AX,4
                               ADD  DX,AX
     
-    loopDownInv2_:                                           ; Draw the second line in the second arrow
+    loopDownInv2_:                                            ; Draw the second line in the second arrow
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
                               MOV  AL,0fH
@@ -1366,20 +1664,20 @@ DISPLAY_STATS PROC
                               push dx
 
     ;       Shows the score text
-                              MOV  AH,02h                    ;set cursor position
-                              MOV  BH,00h                    ;set page number
-                              MOV  DH,0h                     ;set row
-                              MOV  DL,1h                     ;set column
+                              MOV  AH,02h                     ;set cursor position
+                              MOV  BH,00h                     ;set page number
+                              MOV  DH,0h                      ;set row
+                              MOV  DL,1h                      ;set column
                               INT  10h
 
-                              MOV  AH,09h                    ;WRITE STRING
-                              LEA  DX, TEXT_SCORE            ;give DX a pointer
-                              INT  21h                       ;print the string
+                              MOV  AH,09h                     ;WRITE STRING
+                              LEA  DX, TEXT_SCORE             ;give DX a pointer
+                              INT  21h                        ;print the string
 
-                              MOV  AH,02h                    ;set cursor position
-                              MOV  BH,00h                    ;set page number
-                              MOV  DH,0h                     ;set row
-                              MOV  DL,8h                     ;set column
+                              MOV  AH,02h                     ;set cursor position
+                              MOV  BH,00h                     ;set page number
+                              MOV  DH,0h                      ;set row
+                              MOV  DL,8h                      ;set column
                               INT  10h
 
     ;Display Score Value
@@ -1388,20 +1686,20 @@ DISPLAY_STATS PROC
                               CALL PRINT_NUMBER
 
     ;       Shows the lives text
-                              MOV  AH,02h                    ;set cursor position
-                              MOV  BH,00h                    ;set page number
-                              MOV  DH,0h                     ;set row
-                              MOV  DL,20h                    ;set column
+                              MOV  AH,02h                     ;set cursor position
+                              MOV  BH,00h                     ;set page number
+                              MOV  DH,0h                      ;set row
+                              MOV  DL,20h                     ;set column
                               INT  10h
                             
-                              MOV  AH,09h                    ;WRITE STRING
-                              LEA  DX, TEXT_LIVES            ;give DX a pointer
-                              INT  21h                       ;print the string
+                              MOV  AH,09h                     ;WRITE STRING
+                              LEA  DX, TEXT_LIVES             ;give DX a pointer
+                              INT  21h                        ;print the string
 
-                              MOV  AH,02h                    ;set cursor position
-                              MOV  BH,00h                    ;set page number
-                              MOV  DH,0h                     ;set row
-                              MOV  DL,27h                    ;set column
+                              MOV  AH,02h                     ;set cursor position
+                              MOV  BH,00h                     ;set page number
+                              MOV  DH,0h                      ;set row
+                              MOV  DL,27h                     ;set column
                               INT  10h
 
     ;Display Lives Value
@@ -1424,22 +1722,22 @@ PRINT_NUMBER PROC
                               PUSH CX
                               PUSH DX
 
-                              MOV  CX,0                      ; Clear CX (digit counter)
+                              MOV  CX,0                       ; Clear CX (digit counter)
     CONVERT_LOOP:             
-                              MOV  DX,0                      ; Clear DX (remainder)
-                              MOV  BX, 10                    ; Base 10
-                              DIV  BX                        ; Divide AX by 10
-                              PUSH DX                        ; Push remainder (digit)
-                              INC  CX                        ; Increment digit counter
-                              ADD  AX, 0                     ; Check if quotient is 0
-                              JNZ  CONVERT_LOOP              ; Repeat if not
+                              MOV  DX,0                       ; Clear DX (remainder)
+                              MOV  BX, 10                     ; Base 10
+                              DIV  BX                         ; Divide AX by 10
+                              PUSH DX                         ; Push remainder (digit)
+                              INC  CX                         ; Increment digit counter
+                              ADD  AX, 0                      ; Check if quotient is 0
+                              JNZ  CONVERT_LOOP               ; Repeat if not
 
     PRINT_DIGITS:             
-                              POP  DX                        ; Get next digit
-                              ADD  DL, '0'                   ; Convert to ASCII
-                              MOV  AH, 02h                   ; Function to print character
-                              INT  21h                       ; Print digit
-                              LOOP PRINT_DIGITS              ; Repeat for all digits
+                              POP  DX                         ; Get next digit
+                              ADD  DL, '0'                    ; Convert to ASCII
+                              MOV  AH, 02h                    ; Function to print character
+                              INT  21h                        ; Print digit
+                              LOOP PRINT_DIGITS               ; Repeat for all digits
 
                               POP  DX
                               POP  CX
@@ -1455,14 +1753,14 @@ DRAW_WHITE_LINE PROC
                               push DX
 
     ; Draw a horizontal white line
-                              MOV  CX, 320                   ; Number of pixels in a row
-                              MOV  DX, 10                    ; Row position (y-coordinate)
-                              MOV  AL, 15                    ; Color (white)
-                              MOV  AH, 0Ch                   ; Function to write pixel
+                              MOV  CX, 320                    ; Number of pixels in a row
+                              MOV  DX, 10                     ; Row position (y-coordinate)
+                              MOV  AL, 15                     ; Color (white)
+                              MOV  AH, 0Ch                    ; Function to write pixel
 
     DRAW_LINE_LOOP:           
-                              MOV  BX, CX                    ; Set column position (x-coordinate)
-                              INT  10h                       ; Draw pixel
+                              MOV  BX, CX                     ; Set column position (x-coordinate)
+                              INT  10h                        ; Draw pixel
                               DEC  CX
                               JNZ  DRAW_LINE_LOOP
 
