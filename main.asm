@@ -75,7 +75,7 @@
     STEP_PER_ROW              EQU             40                                    ;(BRICK_WIDTH+1PX SPACE)
     STEP_PER_COL              EQU             12                                    ;(BRICK_WIDTH+1PX SPACE)
 
-    COLOR_MATRIX              db              11 dup (1,2,3)                        ; EACH Brick must have certain color here
+    COLOR_MATRIX              db              11 dup (4,9,4,9)                        ; EACH Brick must have certain color here
 
 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
@@ -93,6 +93,11 @@
     SCORE_CURSOR_X            db              8
     SCORE_MAX_WIDTH           db              3
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    POWERUP_CLR EQU 9 
+    POWERDOWN_CLR EQU 4
+    SAVEBRICKSPOS_X DB 0
+    SAVEBRICKSPOS_Y DB 0
+
 
 .CODE
 
@@ -339,14 +344,16 @@ DESTROY_BRICK PROC
 
                               PUSH AX
                               INC  Points
-                              CMP  Points,3
-                              JNE  CNT
-                              MOV  IsPowerDown,1
-                              MOV  IsPowerDown_pre,1
-                              MOV  PowerDown_X,DX
-                              MOV  PowerDown_Y,AX
-                              CALL Draw_PowerDown
-                              CALL DRAW_DOWN_ARROW
+                            ;   CMP  Points,3
+                            ;   JNE  CNT
+                            ;   MOV  IsPowerDown,1
+                            ;   MOV  IsPowerDown_pre,1
+                              MOV SAVEBRICKSPOS_X,DX
+                              MOV SAVEBRICKSPOS_Y,AX
+                            ;   MOV  PowerDown_X,DX
+                            ;   MOV  PowerDown_Y,AX
+                            ;   CALL Draw_PowerDown
+                            ;   CALL DRAW_DOWN_ARROW
                               
     CNT:                      
                               POP  AX
@@ -369,7 +376,39 @@ DESTROY_BRICK PROC
                               MUL  BX
                               ADD  AX,CX
                               MOV  DI,AX                     ;;;;;;;;;;;;;;;;;;;;;;;;;;;DI IS THE ACTUAL BRICK
-                              DEC  [COLOR_MATRIX+DI]
+
+                            CMP [COLOR_MATRIX+DI],POWERDOWN_CLR
+                              JNZ C1
+                            CMP IsPowerDown,1
+                              JZ C1
+                              MOV  IsPowerDown,1
+                              MOV  IsPowerDown_pre,1
+                              MOV DX, SAVEBRICKSPOS_X
+                              MOV AX, SAVEBRICKSPOS_Y
+                              MOV  PowerDown_X,DX
+                              MOV  PowerDown_Y,AX
+                              CALL Draw_PowerDown
+                              CALL DRAW_DOWN_ARROW
+                             mov [COLOR_MATRIX+DI],1
+                             jmp C2
+
+C1:
+                              CMP [COLOR_MATRIX+DI],POWERUP_CLR
+                              JNZ C2
+                              CMP IsPowerUp,1
+                              JZ C2
+                              MOV  IsPowerUp,1
+                              MOV  IsPowerUp_pre,1
+                              MOV DX, SAVEBRICKSPOS_X
+                              MOV AX, SAVEBRICKSPOS_Y
+                              MOV  PowerUp_X,DX
+                              MOV  PowerUp_Y,AX
+                              CALL Draw_PowerUp
+                              CALL DRAW_UP_ARROW
+                              mov [COLOR_MATRIX+DI],1
+                              
+
+   C2:                           DEC  [COLOR_MATRIX+DI]
                               cmp  [COLOR_MATRIX+DI],0
                               JNZ  Continue
                               INC  SCORE
@@ -693,6 +732,7 @@ Move_Power_UP PROC
 
     NOT_COLLIDE_POWERUP:      
                               MOV  IsPowerUp_pre,0
+                              
                               POP  AX
                               RET
     COLLIDE_POWERUP:          
@@ -1481,4 +1521,3 @@ Lose_Life PROC
                               RET
 Lose_Life ENDP
 end main
-
