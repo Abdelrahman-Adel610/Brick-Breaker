@@ -124,15 +124,15 @@ MAIN PROC FAR
                               CMP  SELECTOR, AL
                               JE   EXIT
 
-                              MOV AL, 1
-                              CMP SELECTOR, AL
-                              JE GAME
+                              MOV  AL, 1
+                              CMP  SELECTOR, AL
+                              JE   GAME
 
-    EXIT:   MOV AH, 4CH
-            INT 21H
+    EXIT:                     MOV  AH, 4CH
+                              INT  21H
 
 
-            GAME:
+    GAME:                     
 
                               CALL CLEARING_SCREEN            ;TO CLEAR THE SCREEN
     ; CALL Move_Paddle
@@ -186,13 +186,16 @@ MAIN PROC FAR
     CONT:                     
     ;CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
                               CALL DRAW_ALL_BRICKS            ;DRAW ALL BRICKS ACCORDING TO CONFIGS
-                              CALL DRAWING_BALL               ;DRAWING BALL
+                              MOV  BALL_COLOR, 00H
+                              CALL DRAWING_BALL
+                              MOV  BALL_COLOR, 0FH
                               CALL DISPLAY_STATS              ;DISPLAY STATS
                               CALL DRAW_WHITE_LINE            ;DRAW WHITE LINE TO SEPARATE THE STATS FROM THE GAME
                               CALL clear_Paddle
                               CALL Move_Paddle
                               CALL Draw_Paddle
                               CALL MOVING_BALL
+                              CALL DRAWING_BALL               ;DRAWING BALL
                               CALL HANDLE_COLLISION           ;HANDLE COLLISIONS WITH BRICK
 
 
@@ -381,7 +384,7 @@ DRAW_WELCOME_SCREEN PROC
                               MOV  BL, 09H
                               MOV  AL, BYTE PTR [SI]          ; Load character
                               CMP  AL, '$'                    ; Check for end of string
-                              JE   PRINT1                   ; If '$', exit loop
+                              JE   PRINT1                     ; If '$', exit loop
                               MOV  CX, 1                      ; NO OF CHARACTERS
                               INT  10H                        ; EXECUTE
                               INC  SI                         ; Move to next character
@@ -396,7 +399,7 @@ DRAW_WELCOME_SCREEN PROC
 
     ;PRINT GO TO CHAT
 
-    PRINT1:                 
+    PRINT1:                   
 
 
                               CALL DRAW_WELCOME_ARROW
@@ -413,7 +416,7 @@ DRAW_WELCOME_SCREEN PROC
                               MOV  BL, 0FH
                               MOV  AL, BYTE PTR [SI]          ; Load character
                               CMP  AL, '$'                    ; Check for end of string
-                              JE   PRINT2                  ; If '$', exit loop
+                              JE   PRINT2                     ; If '$', exit loop
                               MOV  CX, 1                      ; NO OF CHARACTERS
                               INT  10H                        ; EXECUTE
                               INC  SI                         ; Move to next character
@@ -426,7 +429,7 @@ DRAW_WELCOME_SCREEN PROC
                               JMP  PRINT_PLAY                 ; Repeat for next character
 
 
-    PRINT2:                
+    PRINT2:                   
 
                               MOV  AH, 02H                    ;SET CURSOR POSITION
                               MOV  BH, 00                     ;PAGE NUMBER
@@ -439,7 +442,7 @@ DRAW_WELCOME_SCREEN PROC
                               MOV  BL, 0FH
                               MOV  AL, BYTE PTR [SI]          ; Load character
                               CMP  AL, '$'                    ; Check for end of string
-                              JE   PRINT4                  ; If '$', exit loop
+                              JE   PRINT4                     ; If '$', exit loop
                               MOV  CX, 1                      ; NO OF CHARACTERS
                               INT  10H                        ; EXECUTE
                               INC  SI                         ; Move to next character
@@ -452,7 +455,7 @@ DRAW_WELCOME_SCREEN PROC
                               JMP  PRINT_CHAT                 ; Repeat for next character
 
 
-    PRINT4:                
+    PRINT4:                   
 
                               MOV  AH, 02H                    ;SET CURSOR POSITION
                               MOV  BH, 00                     ;PAGE NUMBER
@@ -504,6 +507,7 @@ MOVING_BALL PROC
 
                               MOV  AX, MAX_HIGHT
                               SUB  AX, BALL_SIZE
+                              SUB  AX, BALL_SIZE
                               CMP  BALL_POSITION_Y, AX        ;CHECK IF Y > MAX HIGHT
                               JG   HANDEL_LOSE_LIFE           ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
                               
@@ -511,10 +515,12 @@ MOVING_BALL PROC
                               MOV  AX, BALL_SPEED_X
                               ADD  BALL_POSITION_X, AX        ;MOV RIGHT
 
-                              CMP  BALL_POSITION_X, 0         ;CHECK IF X < 0
+                              MOV  AX, BALL_POSITION_X
+                              CMP  AX, 6                      ;CHECK IF X < 6
                               JL   REVERSE_X                  ;IF X < 0 REVERSE THE DIRECTION
 
                               MOV  AX, MAX_WIDTH
+                              SUB  AX, BALL_SIZE
                               SUB  AX, BALL_SIZE
                               CMP  BALL_POSITION_X, AX        ;CHECK IF x > MAX WIDTH - BALL SIZE
                               JG   REVERSE_X                  ;REVERSE IF GREATER
