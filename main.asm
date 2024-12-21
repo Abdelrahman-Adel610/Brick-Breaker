@@ -154,15 +154,16 @@ MAIN PROC FAR
     ;   CALL CLEARING_SCREEN           ;TO CLEAR THE SCREEN
 
 
-                              CMP  IsPowerUp,0                ; CHECK IF THERE IS A POWERUP
+                              CMP  IsPowerUp,0                        ; CHECK IF THERE IS A POWERUP
                               JE   CHWCK_POWERDOWN
-                              CMP  IsPowerUp_pre,0            ; CHECK IF THERE IS A POWERUP
+                              CMP  IsPowerUp_pre,0                    ; CHECK IF THERE IS A POWERUP
                               JE   CHECK_PRE_UP
                               CALL Clear_PowerUp
                               CALL Clear_UP_ARROW
                               CALL Move_Power_UP
                               CALL Draw_PowerUp
                               CALL DRAW_UP_ARROW
+                              JMP  CHWCK_POWERDOWN
 
     CHECK_PRE_UP:             
                               CALL Clear_PowerUp
