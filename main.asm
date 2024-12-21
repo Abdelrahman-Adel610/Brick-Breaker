@@ -57,6 +57,11 @@
     PowerDown_Y               DW  155D
     IsPowerDown               DW  0
     IsPowerDown_pre           DW  0
+
+    POWERUP_CLR               EQU 9
+    POWERDOWN_CLR             EQU 4
+    SAVEBRICKSPOS_X           DW  0
+    SAVEBRICKSPOS_Y           DW  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Breaks var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -75,7 +80,7 @@
     STEP_PER_ROW              EQU 40                                      ;(BRICK_WIDTH+1PX SPACE)
     STEP_PER_COL              EQU 12                                      ;(BRICK_WIDTH+1PX SPACE)
 
-    COLOR_MATRIX              db  11 dup (1,2,3)                          ; EACH Brick must have certain color here
+    COLOR_MATRIX              db  11 dup (1,2,3,4,1,2,3,9)                          ; EACH Brick must have certain color here
 
 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
@@ -575,12 +580,12 @@ HANDLE_COLLISION PROC
                               ADD  AX,BALL_SIZE
                               MOV  BX,320
                               MUL  BX
-                              ADD  AX,BALL_POSITION_X         ;AX=ROWS*320+COLS
+                              ADD  AX,BALL_POSITION_X                 ;AX=ROWS*320+COLS
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
-                              CMP  ES:[SI],DL                 ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              CMP  ES:[SI],DL                         ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   X1
-                              CMP  ES:[SI], BYTE PTR  0       ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              CMP  ES:[SI], BYTE PTR  0               ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
                               JNZ  .REVERSE_Y
 
     ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
@@ -591,10 +596,10 @@ HANDLE_COLLISION PROC
                               ADD  AX,BALL_POSITION_X
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
-                              CMP  ES:[SI],DL                 ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              CMP  ES:[SI],DL                         ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   X2
-                              CMP  ES:[SI], BYTE PTR  0       ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                              JNZ  .REVERSE_Y
+                              CMP  ES:[SI], BYTE PTR  0               ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              JA  .REVERSE_Y
 
     ;WHEN COLLIDE WITH THE LOWER FACE OF BRICK
     X2:                       MOV  AX,BALL_POSITION_Y
@@ -604,10 +609,10 @@ HANDLE_COLLISION PROC
                               ADD  AX,BALL_SIZE
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
-                              CMP  ES:[SI],DL                 ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              CMP  ES:[SI],DL                         ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   X3
-                              CMP  ES:[SI], BYTE PTR  0       ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                              JNZ  .REVERSE_Y
+                              CMP  ES:[SI], BYTE PTR  0               ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              JA  .REVERSE_Y
     X3:                       MOV  AX,BALL_POSITION_Y
                               MOV  BX,320
                               MUL  BX
@@ -615,16 +620,16 @@ HANDLE_COLLISION PROC
                               SUB  AX,BALL_SIZE
                               MOV  SI,AX
                               MOV  DL,BALL_COLOR
-                              CMP  ES:[SI],DL                 ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
+                              CMP  ES:[SI],DL                         ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                               JZ   .RT
-                              CMP  ES:[SI], BYTE PTR  0       ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                              JNZ  .REVERSE_Y
+                              CMP  ES:[SI], BYTE PTR  0               ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
+                              JA  .REVERSE_Y
 
 .RT: RET
 
 .REVERSE_Y:
-                              NEG  BALL_SPEED_Y               ;REVERSE THE DIRECTION OF SPEED IN Y
-                              CALL DESTROY_BRICK              ;DESTROY THE BRICK I COLLIDED WITH
+                              NEG  BALL_SPEED_Y                       ;REVERSE THE DIRECTION OF SPEED IN Y
+                              CALL DESTROY_BRICK                      ;DESTROY THE BRICK I COLLIDED WITH
                               RET
 HANDLE_COLLISION ENDP
 
@@ -638,19 +643,15 @@ DESTROY_BRICK PROC
                               MOV  DX,0
                               MOV  AX,SI
                               MOV  BX,320
-                              DIV  BX                         ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
+                              DIV  BX                                 ;AX=>NUMBER OF ROWS     ;DX=>MODULS<320
     ;;;;;;;;;;;;;;;;;;
 
                               PUSH AX
                               INC  Points
-                              CMP  Points,3
-                              JNE  CNT
-                              MOV  IsPowerDown,1
-                              MOV  IsPowerDown_pre,1
-                              MOV  PowerDown_X,DX
-                              MOV  PowerDown_Y,AX
-                              CALL Draw_PowerDown
-                              CALL DRAW_DOWN_ARROW
+
+                              MOV  SAVEBRICKSPOS_X,DX
+                              MOV  SAVEBRICKSPOS_Y,AX
+
                               
     CNT:                      
                               POP  AX
@@ -660,20 +661,52 @@ DESTROY_BRICK PROC
                               MOV  BX,STEP_PER_COL
                               SUB  AX,FIRST_ROW_POS
                               DIV  BX
-                              MOV  BP,AX                      ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
+                              MOV  BP,AX                              ;;;;;;;;;;;;;;;;;;;;;;;;;;BP IS THE ACTUAL ROW
 
                               MOV  DX,0
                               MOV  AX,CX
                               SUB  AX,FIRST_COL_POS
                               MOV  BX,STEP_PER_ROW
                               DIV  BX
-                              MOV  CX,AX                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
+                              MOV  CX,AX                              ;;;;;;;;;;;;;;;;;;;;;;;;;;;CX IS THE ACTUAL COL
                               MOV  AX,BP
                               MOV  BX,BRICKS_PER_ROW
                               MUL  BX
                               ADD  AX,CX
-                              MOV  DI,AX                      ;;;;;;;;;;;;;;;;;;;;;;;;;;;DI IS THE ACTUAL BRICK
-                              DEC  [COLOR_MATRIX+DI]
+                              MOV  DI,AX                              ;;;;;;;;;;;;;;;;;;;;;;;;;;;DI IS THE ACTUAL BRICK
+
+                             CMP  [COLOR_MATRIX+DI],POWERDOWN_CLR
+                             JNZ  C1
+                             mov  [COLOR_MATRIX+DI],1
+                             CMP  IsPowerDown,1
+                             JZ   C2
+                             MOV  IsPowerDown,1
+                             MOV  IsPowerDown_pre,1
+                             MOV  DX, SAVEBRICKSPOS_X
+                             MOV  AX, SAVEBRICKSPOS_Y
+                             MOV  PowerDown_X,100D
+                             MOV  PowerDown_Y,100D
+                                CALL Draw_PowerDown
+                                CALL DRAW_DOWN_ARROW
+                                jmp  C2
+
+      C1:                       
+                             CMP  [COLOR_MATRIX+DI],POWERUP_CLR
+                             JNZ  C2
+                             mov  [COLOR_MATRIX+DI],1
+                             CMP  IsPowerUp,1
+                              JZ   C2
+                              MOV  IsPowerUp,1
+                              MOV  IsPowerUp_pre,1
+                              MOV  DX, SAVEBRICKSPOS_X
+                              MOV  AX, SAVEBRICKSPOS_Y
+                               MOV  PowerUp_X,135D
+                               MOV  PowerUp_Y,100D
+                              CALL Draw_PowerUp
+                              CALL DRAW_UP_ARROW
+                              
+
+    C2:                       DEC  [COLOR_MATRIX+DI]
                               cmp  [COLOR_MATRIX+DI],0
                               JNZ  Continue
                               INC  SCORE
@@ -1785,4 +1818,3 @@ Lose_Life PROC
                               RET
 Lose_Life ENDP
 end main
-
