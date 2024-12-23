@@ -58,8 +58,10 @@
     IsPowerDown               DW  0
     IsPowerDown_pre           DW  0
 
-    POWERUP_CLR               EQU 9
-    POWERDOWN_CLR             EQU 4
+    POWRUP_BRICK_CLR               EQU 9
+    POWRDOWN_BRICK_CLR             EQU 4
+    POWER_DOWN_CLR                 EQU 5
+    POWER_UP_CLR                 EQU 0AH
     SAVEBRICKSPOS_X           DW  0
     SAVEBRICKSPOS_Y           DW  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -82,8 +84,7 @@
 
     COLOR_MATRIX              db  11 dup (4,9,4,9,4,9)                    ; EACH Brick must have certain color here
     
-    GNCLR_MATRIX              db  11 dup(4,9,4,9,4,9)   
-
+    GNCLR_MATRIX              db  11 dup (4,9,4,9,4,9) 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
     ROW                       dw  FIRST_ROW_POS
     COL                       dw  FIRST_COL_POS
@@ -630,6 +631,12 @@ HANDLE_COLLISION PROC
 .RT: RET
 
 .REVERSE_Y:
+                             CMP  ES:[SI], BYTE PTR POWER_UP_CLR
+                             JE .RT  
+
+                             CMP  ES:[SI], BYTE PTR POWER_DOWN_CLR
+                             JE .RT   
+
                               NEG  BALL_SPEED_Y                       ;REVERSE THE DIRECTION OF SPEED IN Y
                               CALL SOUND
                               CALL DESTROY_BRICK                      ;DESTROY THE BRICK I COLLIDED WITH
@@ -678,7 +685,7 @@ DESTROY_BRICK PROC
                               ADD  AX,CX
                               MOV  DI,AX                              ;;;;;;;;;;;;;;;;;;;;;;;;;;;DI IS THE ACTUAL BRICK
 
-                              CMP  [COLOR_MATRIX+DI],POWERDOWN_CLR
+                              CMP  [COLOR_MATRIX+DI],POWRDOWN_BRICK_CLR
                               JNZ  C1
                               mov  [COLOR_MATRIX+DI],1
                               CMP  IsPowerDown,1
@@ -687,14 +694,15 @@ DESTROY_BRICK PROC
                               MOV  IsPowerDown_pre,1
                               MOV  DX, SAVEBRICKSPOS_X
                               MOV  AX, SAVEBRICKSPOS_Y
-                              MOV  PowerDown_X,100D
-                              MOV  PowerDown_Y,100D
+                              ADD AX,BRICK_HEIGHT
+                              MOV  PowerDown_X,DX
+                              MOV  PowerDown_Y,AX
                               CALL Draw_PowerDown
                               CALL DRAW_DOWN_ARROW
                               jmp  C2
 
     C1:                       
-                              CMP  [COLOR_MATRIX+DI],POWERUP_CLR
+                              CMP  [COLOR_MATRIX+DI],POWRUP_BRICK_CLR
                               JNZ  C2
                               mov  [COLOR_MATRIX+DI],1
                               CMP  IsPowerUp,1
@@ -703,8 +711,10 @@ DESTROY_BRICK PROC
                               MOV  IsPowerUp_pre,1
                               MOV  DX, SAVEBRICKSPOS_X
                               MOV  AX, SAVEBRICKSPOS_Y
-                              MOV  PowerUp_X,135D
-                              MOV  PowerUp_Y,100D
+                              ADD AX,BRICK_HEIGHT
+
+                              MOV  PowerUp_X,DX
+                              MOV  PowerUp_Y,AX
                               CALL Draw_PowerUp
                               CALL DRAW_UP_ARROW
                               
@@ -718,7 +728,7 @@ DESTROY_BRICK PROC
                               CMP  SCORE, 8                           ;IF SCORE REACH 12 ===> INCREASE BALL SPEED
                               JE   POWER_DOWN_BALL
 
-                              CMP  SCORE, 15
+                              CMP  SCORE, 10
                               JE   NORMAL_SPEED
 
                               CMP  SCORE, 25                          ;IF SCORE REACH 12 ===> INCREASE BALL SPEED
@@ -1209,7 +1219,7 @@ Draw_PowerUp PROC
     drawUP_ver:               
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,02H                             ; Green Shape
+                              MOV  AL,  POWER_UP_CLR                             ; Green Shape
                               PUSH BX
                               MOV  BH,00
                               INT  10h
@@ -1292,7 +1302,7 @@ Draw_PowerDown PROC
     drawDown_ver:             
     ; AL = Color, BH = Page Number, CX = x, DX = y
                               MOV  AH,0CH
-                              MOV  AL,04H                             ; Red Shape
+                              MOV  AL,POWER_DOWN_CLR                             ; Red Shape
                               PUSH BX
                               MOV  BH,00
                               INT  10h
@@ -1896,6 +1906,10 @@ RESET_GAME PROC
     MOV BALL_POSITION_Y  ,      190D   
     ; MOV BALL_SPEED_Y     ,       5H                                      ;THE SPEED OF THE BALL IN Y DIRECTION
     ; MOV BALL_SPEED_X      ,      2H
+     mov   BALL_POWER_UP  , 0
+    mov  BALL_POWER_DOWN     , 0
+
+    
     ; CALL MOVING_BALL
 
     ; CALL DRAWING_BALL
