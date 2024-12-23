@@ -31,8 +31,8 @@
     LeftBoundry               DW  314D
     RightBoundry              DW  6D
 
-    Max_size                  DW  160
-    Min_size                  DW  20
+    Max_size                  DW  100
+    Min_size                  DW  25
 
     Amount                    DW  20
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -541,14 +541,14 @@ MOVING_BALL PROC
     ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
 
                                MOV  AX,Paddle_X
-                               SUB  AX, BALL_SIZE
-                               ADD  AX,BALL_SPEED_X
+                            ;    SUB  AX, BALL_SIZE
+                            ;    ADD  AX,BALL_SPEED_X
                                CMP  BALL_POSITION_X,AX                 ;; Check x -->Start
                                JB   NOT_COLLIDE
 
                                ADD  AX,width_Paddle
-                               SUB  AX, BALL_SIZE
-                               ADD  AX,BALL_SPEED_X
+                            ;    SUB  AX, BALL_SIZE
+                            ;    ADD  AX,BALL_SPEED_X
                                CMP  BALL_POSITION_X,AX                 ;; Check x -->End
                                JG   NOT_COLLIDE
 
