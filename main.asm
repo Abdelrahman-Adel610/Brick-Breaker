@@ -30,6 +30,11 @@
 
     LeftBoundry               DW  314D
     RightBoundry              DW  6D
+
+    Max_size                  DW  160
+    Min_size                  DW  20
+
+    Amount                    DW  20
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerUp var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1035,6 +1040,7 @@ Duplicate_Paddle_Size PROC
                                PUSH AX
                                PUSH CX
 
+
                                MOV  AX,Paddle_X
                                MOV  CX ,width_Paddle
                                SHR  CX,1
@@ -1045,7 +1051,14 @@ Duplicate_Paddle_Size PROC
                                ADD  AX,AX
                                mov  width_Paddle,AX
 
-                               POP  CX
+                               CMP  AX, Max_size
+                               JG   Reset_MaxSize
+                               JMP  RET___
+    Reset_MaxSize:             
+                               MOV  AX, Max_size
+                               mov  width_Paddle,AX
+
+    RET___:                    POP  CX
                                POP  AX
                                RET
 Duplicate_Paddle_Size endp
@@ -1063,7 +1076,15 @@ Halv_Paddle_Size PROC
                                MOV  AX,width_Paddle
                                SHR  AX,1
                                MOV  width_Paddle,AX
-                               POP  CX
+
+                               CMP  AX, Min_size
+                               JB   Reset_MinSize
+                               JMP  RETT_
+    Reset_MinSize:             
+                               MOV  AX, Min_size
+                               mov  width_Paddle,AX
+
+    RETT_:                     POP  CX
                                POP  AX
                                RET
 Halv_Paddle_Size endp
@@ -1908,10 +1929,10 @@ RESET_GAME PROC
 
     ; CALL DRAWING_BALL
 
+                               CALL clear_Paddle
                                MOV  width_Paddle     ,      50d
                                MOV  height_Paddle    ,      4d
                                MOV  Paddle_Speed     ,      6
-                               CALL clear_Paddle
                                MOV  Paddle_X         ,      135D
                                MOV  Paddle_Y         ,      196D
                                CALL Draw_Paddle
