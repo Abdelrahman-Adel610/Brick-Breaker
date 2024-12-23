@@ -80,9 +80,9 @@
     STEP_PER_ROW              EQU 40                                      ;(BRICK_WIDTH+1PX SPACE)
     STEP_PER_COL              EQU 12                                      ;(BRICK_WIDTH+1PX SPACE)
 
-    COLOR_MATRIX              db  11 dup (1,2,3,4,2,9)                    ; EACH Brick must have certain color here
+    COLOR_MATRIX              db  11 dup (4,9,4,9,4,9)                    ; EACH Brick must have certain color here
     
-    GNCLR_MATRIX              db  11 dup (1,2,3,4,2,9)
+    GNCLR_MATRIX              db  11 dup(4,9,4,9,4,9)   
 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
     ROW                       dw  FIRST_ROW_POS
@@ -95,7 +95,7 @@
     TEXT_SCORE                db  'SCORE: $'
     TEXT_LIVES                db  'LIVES: $'
     SCORE                     db  0
-    LIVES                     db  3
+    LIVES                     db  8
     SCORE_CURSOR_X            db  8
     SCORE_MAX_WIDTH           db  3
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1882,36 +1882,49 @@ Lose_Life PROC
                               JNE  DEC_LIVES
                               RET
     DEC_LIVES:                
-    ;   DEC  LIVES
-                              CALL RESET_GAME
+                            DEC  LIVES
+                               CALL RESET_GAME
                               RET
 Lose_Life ENDP
 RESET_GAME PROC
-                              MOV  BALL_POSITION_X  ,      160D
-                              MOV  BALL_POSITION_Y  ,      190D
-                              MOV  BALL_SPEED_Y     ,       5H        ;THE SPEED OF THE BALL IN Y DIRECTION
-                              MOV  BALL_SPEED_X      ,      2H
-                              MOV  width_Paddle     ,      50d
-                              MOV  height_Paddle    ,      4d
-                              MOV  Paddle_Speed     ,      6
-                              CALL clear_Paddle
-                              MOV  Paddle_X         ,      135D
-                              MOV  Paddle_Y         ,      196D
-                              CALL Draw_Paddle
 
-    ;RESET_CLR_MATRIX
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                              MOV  DI,0
-    RESET_CLR_MTRX:           
-                              MOV  AL,[GNCLR_MATRIX+DI]
-                              MOV  [COLOR_MATRIX+DI],AL
-                              INC  DI
-                              CMP  DI,33
-                              JNZ  RESET_CLR_MTRX
-                              DEC  LIVES
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; CALL MOVING_BALL
+    ; MOV  BALL_COLOR, 00H
+    ; CALL DRAWING_BALL
+    ; MOV  BALL_COLOR, 0FH
+    MOV BALL_POSITION_X  ,      160D                                 
+    MOV BALL_POSITION_Y  ,      190D   
+    ; MOV BALL_SPEED_Y     ,       5H                                      ;THE SPEED OF THE BALL IN Y DIRECTION
+    ; MOV BALL_SPEED_X      ,      2H
+    ; CALL MOVING_BALL
 
-                              RET
+    ; CALL DRAWING_BALL
+
+    MOV width_Paddle     ,      50d
+    MOV height_Paddle    ,      4d
+    MOV Paddle_Speed     ,      6
+    CALL clear_Paddle
+    MOV Paddle_X         ,      135D
+    MOV Paddle_Y         ,      196D
+    CALL Draw_Paddle
+
+;     ;RESET_CLR_MATRIX
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    MOV DI,0
+   mov   ROW      ,       FIRST_ROW_POS
+   mov COL        ,     FIRST_COL_POS
+   mov CRNT_BRICK ,     0    
+    RESET_CLR_MTRX:
+    MOV AL,[GNCLR_MATRIX+DI]
+    MOV [COLOR_MATRIX+DI],AL
+    INC DI
+    CMP DI,33
+    JNZ RESET_CLR_MTRX
+;     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    MOV IsPowerDown_pre,0
+    MOV IsPowerUp_pre,0
+    mov score,0
+   RET
 RESET_GAME ENDP
 
 end main
