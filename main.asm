@@ -17,7 +17,7 @@
 
     BALL_COLOR                DB  0FH                                     ;RED COLOR  CHANGED TO WHITE TO HANDLE THE COLLISIONS
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;Paddle var
+    ;Paddle1 var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     width_Paddle              DW  50d
     height_Paddle             DW  4d
@@ -30,6 +30,17 @@
 
     LeftBoundry               DW  265
     RightBoundry              DW  6
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;Paddle2 var
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    width2_Paddle              DW  50d
+    height2_Paddle             DW  4d
+
+    Paddle2_Color              DB  0FH
+    Paddle2_Speed              DW  6
+
+    Paddle_X2                  DW  135D
+    Paddle_Y2                  DW  196D
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerUp var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -109,13 +120,21 @@
     SELECTOR                  DB  1
     ARROW_COLOR               DB  09H
     ARROW_ROW                 DB  09H
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;multiplayer vars
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    sendChar dw ?
+    recChar dw ?
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .CODE
 
 MAIN PROC FAR
 
                               MOV  AX, @DATA
-                              MOV  DS, AX                     ;MOVING DATA TO DATA SEGNMENT
+                              MOV  DS, AX                     ;MOVING DATA TO DATA SEGMENT
+
+                              CALL initializingUART
 
                               mov  ax, 0A000h                 ; Video memory segment for mode 13h
                               mov  es, ax                     ; Set ES to point to video memory
@@ -199,8 +218,11 @@ MAIN PROC FAR
                               CALL DISPLAY_STATS              ;DISPLAY STATS
                               CALL DRAW_WHITE_LINE            ;DRAW WHITE LINE TO SEPARATE THE STATS FROM THE GAME
                               CALL clear_Paddle
+                              CALL Clear_Paddle2
                               CALL Move_Paddle
+                              CALL Move_Paddle2
                               CALL Draw_Paddle
+                              CALL Draw_Paddle2
                               CALL MOVING_BALL
                               CALL DRAWING_BALL               ;DRAWING BALL
                               CALL HANDLE_COLLISION           ;HANDLE COLLISIONS WITH BRICK
@@ -510,22 +532,24 @@ MOVING_BALL PROC
                               SUB  BALL_POSITION_Y, AX        ;MOVE THE BALL UP
 
                               CMP  BALL_POSITION_Y, 15        ;CHECK IF Y < 15 (THE HIGHT OF THE WINDOW)
-                              JL   REVERSE_Y                  ;IF Y < 15 REVERSE THE DIRECTION OF MOVING
-
+                              JGE   check_max_hight                 
+                              jmp REVERSE_Y                    ;IF Y < 15 REVERSE THE DIRECTION OF MOVING
+                            check_max_hight:
                               MOV  AX, MAX_HIGHT
                               SUB  AX, BALL_SIZE
                               SUB  AX, BALL_SIZE
-                              CMP  BALL_POSITION_Y, AX        ;CHECK IF Y > MAX HIGHT
-                              JG   HANDEL_LOSE_LIFE           ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
-                              
-
+                              CMP  BALL_POSITION_Y, AX        ;CHECK IF Y > MAX HIGHT8
+                              JLE   moveBall           
+                              jmp HANDEL_LOSE_LIFE ;IF Y > MAX HIGHT - BALL SIZE REVERSE THE DIRECTION TOO
+                            moveBall:
                               MOV  AX, BALL_SPEED_X
                               ADD  BALL_POSITION_X, AX        ;MOV RIGHT
 
                               MOV  AX, BALL_POSITION_X
                               CMP  AX, 6                      ;CHECK IF X < 6
-                              JL   REVERSE_X                  ;IF X < 0 REVERSE THE DIRECTION
-
+                              JGE   checkLeft
+                              JMP  REVERSE_X                  ;IF X < 0 REVERSE THE DIRECTION
+                            checkLeft:
                               MOV  AX, MAX_WIDTH
                               SUB  AX, BALL_SIZE
                               SUB  AX, BALL_SIZE
@@ -534,26 +558,51 @@ MOVING_BALL PROC
 
 
     ;;;;;;;;;;;;;;;; Check Ball-Paddle collision
-
+                        checkPaddleX:
                               MOV  AX,Paddle_X
                               SUB  AX, BALL_SIZE
                               ADD  AX,BALL_SPEED_X
                               CMP  BALL_POSITION_X,AX         ;; Check x -->Start
-                              JB   NOT_COLLIDE
+                              JB   checkPaddleX2
 
                               ADD  AX,width_Paddle
                               SUB  AX, BALL_SIZE
                               ADD  AX,BALL_SPEED_X
                               CMP  BALL_POSITION_X,AX         ;; Check x -->End
-                              JG   NOT_COLLIDE
+                              JG   checkPaddleX2
+                              JMP  checkPaddleY
+        ;;;;;;;;;;;;;;;; Check Ball-Paddle2 collision
+                        checkPaddleX2:
+                              MOV  AX,Paddle_X2
+                              SUB  AX, BALL_SIZE
+                              ADD  AX,BALL_SPEED_X
+                              CMP  BALL_POSITION_X,AX         ;; Check x -->Start
+                              JB   NOT_COLLIDE
 
-    CHECK_Y:                  
+                              ADD  AX,width2_Paddle
+                              SUB  AX, BALL_SIZE
+                              ADD  AX,BALL_SPEED_X
+                              CMP  BALL_POSITION_X,AX         ;; Check x -->End
+                              JG   NOT_COLLIDE
+                              JMP  checkPaddleY2
+
+
+                        checkPaddleY:                  
 
                               MOV  AX, Paddle_Y
                               SUB  AX, BALL_SIZE
                               ADD  AX,BALL_SPEED_Y
                               CMP  BALL_POSITION_Y, AX        ;CHECK IF Y > MAX HIGHT
                               JGE  REVERSE_Y
+                              JMP  RT
+
+                        checkPaddleY2:
+                                MOV  AX, Paddle_Y2
+                                SUB  AX, BALL_SIZE
+                                ADD  AX,BALL_SPEED_Y
+                                CMP  BALL_POSITION_Y, AX        ;CHECK IF Y > MAX HIGHT
+                                JGE  REVERSE_Y
+
 
     NOT_COLLIDE:              
     ;;;;;;;;;;;;;;;;
@@ -822,15 +871,26 @@ Move_Paddle PROC
     Done:                     
 
     ; Read the key
-                              MOV  AH, 00h
+                              MOV  AH, 0h
                               INT  16h
+                              MOV sendChar,ax
+                              ;check for send
+                              mov dx,3FDH 		; Line Status Register
+                              In al , dx 	;Read Line Status
+                              test al , 00100000b
+                              jz checkPressed                    ;Not empty
+                              mov dx , 3F8H		; Transmit data register
+                              mov al,BYTE PTR sendChar + 1        ; put the data into al
+                              out dx , al         ; sending the data
+
            
     ; Check for left arrow (E0 4B)
-                              CMP  AH, 4Bh                    ; Compare scancode (AL contains scancode without E0 prefix)
+                              checkPressed:
+                              CMP  BYTE PTR sendChar + 1, 4Bh                    ; Compare scancode (AL contains scancode without E0 prefix)
                               JE   left_pressed               ; Jump if Left Arrow
                   
     ; Check for right arrow (E0 4D)
-                              CMP  AH, 4Dh                    ; Compare scancode (AL contains scancode without E0 prefix)
+                              CMP  BYTE PTR sendChar + 1, 4Dh                    ; Compare scancode (AL contains scancode without E0 prefix)
                               JE   right_pressed              ; Jump if Right Arrow
                    
                               JMP  rett                       ; Return to polling
@@ -873,6 +933,68 @@ Move_Paddle PROC
                               RET
 
 Move_Paddle endp
+
+Move_Paddle2 PROC 
+                                push DX
+                                push CX
+                                PUSH AX
+                                PUSH BX
+    
+                         mov dx , 3FDH		; Line Status Register
+                        in al , dx 
+                        test al , 1 
+                        jz retPaddle2
+
+                        mov dx , 03F8H
+                        in al , dx 
+                        MOV recChar, 0h
+                        mov BYTE PTR recChar,al              ;check if the received data is sec key then terminate the programme 
+             
+        ; Check for left arrow (E0 4B)
+                                CMP  BYTE PTR recChar, 4Bh                    ; Compare scancode (AL contains scancode without E0 prefix)
+                                JE   left_pressed2               ; Jump if Left Arrow
+                    
+        ; Check for right arrow (E0 4D)
+                                CMP  BYTE PTR recChar, 4Dh                    ; Compare scancode (AL contains scancode without E0 prefix)
+                                JE   right_pressed2              ; Jump if Right Arrow
+                     
+                                JMP  retPaddle2                       ; Return to polling
+                            
+        left_pressed2:             
+                     
+        ; Check for the boundries
+                                MOV  BX,Paddle2_Speed
+                                SUB  Paddle_X2,BX
+                                MOV  AX,RightBoundry
+                                CMP  Paddle_X2,AX
+                                JB   Maintain_Right_Boundry2
+                                JMP  retPaddle2                       ; Return to polling
+                     
+        right_pressed2:            
+                                MOV  BX,Paddle2_Speed
+                                ADD  Paddle_X2,BX
+                                MOV  AX,LeftBoundry
+                                CMP  Paddle_X2,AX
+                                JA   Maintain_Left_Boundry2
+                                JMP  retPaddle2                       ; Return to polling
+         	                 
+        Maintain_Right_Boundry2:   
+                                MOV  AX,RightBoundry
+                                MOV  Paddle_X2,AX
+                                JMP  retPaddle2
+                         
+        Maintain_Left_Boundry2:    
+                                MOV  AX,LeftBoundry
+                                MOV  Paddle_X2,AX
+                            
+
+        retPaddle2:
+                                POP  BX
+                                POP  AX
+                                pop  CX
+                                pop  DX
+                                RET 
+    Move_Paddle2 endp
     
     
                   
@@ -918,6 +1040,48 @@ clear_Paddle PROC
                               RET
 clear_Paddle endp
 
+Clear_Paddle2 PROC
+                                push DX
+                                push CX
+                                PUSH AX
+                                PUSH BX
+                 
+    
+        ; the coordinates of the paddle
+                         
+                                MOV  CX,Paddle_X2
+                                MOV  DX,Paddle_Y2
+                         	                 
+            
+        clear_Paddle_hori2:        
+                                MOV  BX,width_Paddle
+                         
+     	
+        clear_Paddle_ver2:         
+        ; AL = Color, BH = Page Number, CX = x, DX = y
+                                MOV  AH,0CH
+                                MOV  AL,00
+                                PUSH BX
+                                MOV  BH,00
+                                INT  10h
+                                INC  CX
+                                POP  BX
+                                DEC  BL
+                                JNZ  clear_Paddle_ver2
+                                MOV  CX,Paddle_X2
+                                INC  DX
+                                CMP  DX,199
+                                JNZ  clear_Paddle_hori2
+            
+                                POP  BX
+                                POP  AX
+                                pop  CX
+                                pop  DX
+                             
+                                RET
+    Clear_Paddle2 endp
+
+
 Draw_Paddle PROC
                               push DX
                               push CX
@@ -959,6 +1123,46 @@ Draw_Paddle PROC
                               RET
 Draw_Paddle endp
 
+Draw_Paddle2 PROC
+                                push DX
+                                push CX
+                                PUSH AX
+                                PUSH BX
+                 
+    
+        ; the coordinates of the paddle
+                         
+                                MOV  CX,Paddle_X2
+                                MOV  DX,Paddle_Y2
+                         	                 
+            
+        draw_Paddle_hori2:         
+                                MOV  BX,width_Paddle
+                         
+     	
+        draw_Paddle_ver2:          
+        ; AL = Color, BH = Page Number, CX = x, DX = y
+                                MOV  AH,0CH
+                                MOV  AL,Paddle_Color
+                                PUSH BX
+                                MOV  BH,00
+                                INT  10h
+                                INC  CX
+                                POP  BX
+                                DEC  BL
+                                JNZ  draw_Paddle_ver2
+                                MOV  CX,Paddle_X2
+                                INC  DX
+                                CMP  DX,199
+                                JNZ  draw_Paddle_hori2
+            
+                                POP  BX
+                                POP  AX
+                                pop  CX
+                                pop  DX
+                             
+                                RET
+    Draw_Paddle2 endp
 
 
 
@@ -1847,5 +2051,38 @@ RESET_GAME PROC
 
    RET
 RESET_GAME ENDP
+
+initializingUART proc
+push ax
+push dx
+
+  ; set divisor latch access bit
+
+  mov dx,3fbh 			; Line Control Register
+  mov al,10000000b		;Set Divisor Latch Access Bit
+  out dx,al
+
+  ;Set LSB byte of the Baud Rate Divisor Latch register.
+
+  mov dx,3f8h			
+  mov al,0ch			
+  out dx,al
+
+  ;Set MSB byte of the Baud Rate Divisor Latch register.
+
+  mov dx,3f9h
+  mov al,00h
+  out dx,al
+
+  ;Set port configuration
+  mov dx,3fbh
+  mov al,00011011b
+  out dx,al     
+
+  pop dx
+  pop ax
+    ret
+
+initializingUART endp
 
 end main
