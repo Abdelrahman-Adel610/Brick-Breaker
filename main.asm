@@ -80,9 +80,9 @@
     STEP_PER_ROW              EQU 40                                      ;(BRICK_WIDTH+1PX SPACE)
     STEP_PER_COL              EQU 12                                      ;(BRICK_WIDTH+1PX SPACE)
 
-    COLOR_MATRIX              db  11 dup (4,4,9,9)                        ; EACH Brick must have certain color here
+    COLOR_MATRIX              db  11 dup (4,9,9,9)                        ; EACH Brick must have certain color here
     
-    GNCLR_MATRIX              db  11 dup (4,4,9,9)
+    GNCLR_MATRIX              db  11 dup (4,9,9,9)
 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
     ROW                       dw  FIRST_ROW_POS
@@ -1908,10 +1908,10 @@ RESET_GAME PROC
 
     ; CALL DRAWING_BALL
 
+                               CALL clear_Paddle
                                MOV  width_Paddle     ,      50d
                                MOV  height_Paddle    ,      4d
                                MOV  Paddle_Speed     ,      6
-                               CALL clear_Paddle
                                MOV  Paddle_X         ,      135D
                                MOV  Paddle_Y         ,      196D
                                CALL Draw_Paddle
