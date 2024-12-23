@@ -28,8 +28,8 @@
     Paddle_X                  DW  135D
     Paddle_Y                  DW  196D
 
-    LeftBoundry               DW  265
-    RightBoundry              DW  6
+    LeftBoundry               DW  314D
+    RightBoundry              DW  6D
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerUp var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -149,9 +149,9 @@ MAIN PROC FAR
                                INT  21H
 
 
-    GAME:                      
-
-                               CALL CLEARING_SCREEN                    ;TO CLEAR THE SCREEN
+    GAME:                      CALL CLEARING_SCREEN                    ;TO CLEAR THE SCREEN
+                               CALL RESET_GAME
+                             
     ; CALL Move_Paddle
 
     TIME_AGAIN:                MOV  AH, 2CH                            ;GET THE SYSTEM TIME
@@ -897,7 +897,9 @@ Move_Paddle PROC
                                MOV  BX,Paddle_Speed
                                ADD  Paddle_X,BX
                                MOV  AX,LeftBoundry
-                               CMP  Paddle_X,AX
+                               MOV  CX,Paddle_X
+                               ADD  CX, width_Paddle
+                               CMP  CX,AX
                                JA   Maintain_Left_Boundry
                                JMP  rett                               ; Return to polling
      
@@ -909,6 +911,7 @@ Move_Paddle PROC
 	                   
     Maintain_Left_Boundry:     
                                MOV  AX,LeftBoundry
+                               SUB  AX,width_Paddle
                                MOV  Paddle_X,AX
                                JMP  rett
 
@@ -1030,24 +1033,40 @@ Halv_Paddle_Velocity endp
 
 Duplicate_Paddle_Size PROC
                                PUSH AX
-                               MOV  AX,width_Paddle
-                               ADD  width_Paddle,AX
-                               MOV  Paddle_X,160D
-                               SUB  Paddle_X,AX
+                               PUSH CX
+
+                               MOV  AX,Paddle_X
+                               MOV  CX ,width_Paddle
+                               SHR  CX,1
+                               SUB  AX,CX
+                               MOV  Paddle_X,AX
+                               
+                               MOV  AX, width_Paddle
+                               ADD  AX,AX
+                               mov  width_Paddle,AX
+
+                               POP  CX
                                POP  AX
                                RET
 Duplicate_Paddle_Size endp
 
-    ; Halv_Paddle_Size PROC
-    ;                               PUSH AX
-    ;                               MOV  AX,width_Paddle
-    ;                               SHR  AX,1
-    ;                               MOV  width_Paddle,AX
-    ;                               SHR  AX,1
-    ;                               MOV  Paddle_X,160-AX
-    ;                               POP  AX
-    ;                               RET
-    ; Halv_Paddle_Size endp
+Halv_Paddle_Size PROC
+                               PUSH AX
+                               PUSH CX
+                               MOV  AX,Paddle_X
+                               MOV  CX ,width_Paddle
+                               SHR  CX,1
+                               SHR  CX,1
+                               ADD  AX,CX
+                               MOV  Paddle_X,AX
+
+                               MOV  AX,width_Paddle
+                               SHR  AX,1
+                               MOV  width_Paddle,AX
+                               POP  CX
+                               POP  AX
+                               RET
+Halv_Paddle_Size endp
 
     ;;;;;;;;;;;;;;;;;;;
 
@@ -1084,7 +1103,9 @@ Move_Power_UP PROC
                                RET
     COLLIDE_POWERUP:           
                                MOV  IsPowerUp_pre,0
+                               CALL clear_Paddle
                                CALL Duplicate_Paddle_Size              ;Power up
+    ;    CALL Draw_Paddle
                                POP  AX
                                RET
 
@@ -1122,7 +1143,8 @@ Move_Power_Down PROC
                                RET
     COLLIDE_POWERDOWN:         
                                MOV  IsPowerDown_pre,0
-                               CALL Duplicate_Paddle_Size              ;Power up
+                               CALL clear_Paddle
+                               CALL Halv_Paddle_Size                   ;Power up
                                POP  AX
                                RET
 
