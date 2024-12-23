@@ -80,9 +80,9 @@
     STEP_PER_ROW              EQU 40                                      ;(BRICK_WIDTH+1PX SPACE)
     STEP_PER_COL              EQU 12                                      ;(BRICK_WIDTH+1PX SPACE)
 
-    COLOR_MATRIX              db  11 dup (1,2,3,4,2,9)                    ; EACH Brick must have certain color here
+    COLOR_MATRIX              db  11 dup (4,4,9,9)                    ; EACH Brick must have certain color here
     
-    GNCLR_MATRIX              db  11 dup (1,2,3,4,2,9)
+    GNCLR_MATRIX              db  11 dup (4,4,9,9)
 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
     ROW                       dw  FIRST_ROW_POS
@@ -696,8 +696,8 @@ DESTROY_BRICK PROC
                                MOV  IsPowerDown_pre,1
                                MOV  DX, SAVEBRICKSPOS_X
                                MOV  AX, SAVEBRICKSPOS_Y
-                               MOV  PowerDown_X,100D
-                               MOV  PowerDown_Y,100D
+                               MOV  PowerDown_X,DX
+                               MOV  PowerDown_Y,70D
                                CALL Draw_PowerDown
                                CALL DRAW_DOWN_ARROW
                                jmp  C2
@@ -712,8 +712,8 @@ DESTROY_BRICK PROC
                                MOV  IsPowerUp_pre,1
                                MOV  DX, SAVEBRICKSPOS_X
                                MOV  AX, SAVEBRICKSPOS_Y
-                               MOV  PowerUp_X,135D
-                               MOV  PowerUp_Y,100D
+                               MOV  PowerUp_X,DX
+                               MOV  PowerUp_Y,70D
                                CALL Draw_PowerUp
                                CALL DRAW_UP_ARROW
                               
