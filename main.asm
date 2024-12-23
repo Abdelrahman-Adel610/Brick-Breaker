@@ -95,7 +95,7 @@
     TEXT_SCORE                db  'SCORE: $'
     TEXT_LIVES                db  'LIVES: $'
     SCORE                     db  0
-    LIVES                     db  3
+    LIVES                     db  8
     SCORE_CURSOR_X            db  8
     SCORE_MAX_WIDTH           db  3
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -109,6 +109,17 @@
     SELECTOR                  DB  1
     ARROW_COLOR               DB  09H
     ARROW_ROW                 DB  09H
+
+    STRING_COLOR              DB  00H
+    ROW_CURSOR                DB  04H
+    COLOUM_CURSOR             DB  00H
+
+    ;;;;;;;;;;;;;;;;;;;;;
+    SOUND_FREQ                DW  1193
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    BALL_POWER_UP             DB  0
+    BALL_POWER_DOWN           DB  0
 
 .CODE
 
@@ -201,6 +212,27 @@ MAIN PROC FAR
                                CALL clear_Paddle
                                CALL Move_Paddle
                                CALL Draw_Paddle
+
+    ;;;;;;;;;;CHECK POWE UP && DOWN
+                               CMP  BALL_POWER_DOWN, 1
+                               JNE  COMPARE_UP
+                               MOV  AX, 4H
+                               MOV  BX, 9H
+                               MOV  BALL_SPEED_Y, BX
+                               MOV  BALL_SPEED_X, AX
+                               MOV  BALL_POWER_DOWN, 0
+                               JMP  CONTI
+
+    COMPARE_UP:                
+                               CMP  BALL_POWER_UP, 1
+                               JNE  CONTI
+                               MOV  AX, 1H
+                               MOV  BX, 3H
+                               MOV  BALL_SPEED_Y, BX
+                               MOV  BALL_SPEED_X, AX
+                               MOV  BALL_POWER_UP, 0
+
+    CONTI:                     
                                CALL MOVING_BALL
                                CALL DRAWING_BALL                       ;DRAWING BALL
                                CALL HANDLE_COLLISION                   ;HANDLE COLLISIONS WITH BRICK
@@ -374,122 +406,90 @@ MOVE_WELCOME_ARROW PROC
                                RET
 MOVE_WELCOME_ARROW ENDP
 
+PRINT_STRING PROC
+
+                               POP  DI
+                               POP  SI
+    PRINT_S:                   MOV  AH, 09H
+                               MOV  BL, STRING_COLOR
+                               MOV  AL, BYTE PTR [SI]                  ; Load character
+                               CMP  AL, '$'                            ; Check for end of string
+                               JE   RETURN_STRING                      ; If '$', exit loop
+                               MOV  CX, 1                              ; NO OF CHARACTERS
+                               INT  10H                                ; EXECUTE
+                               INC  SI                                 ; Move to next character
+
+                               INC  COLOUM_CURSOR                      ;INC CURSOR POSITION
+                               MOV  DL, COLOUM_CURSOR
+                               MOV  BH, 00
+                               MOV  DH, ROW_CURSOR
+                               MOV  AH, 02H
+                               INT  10H
+                               JMP  PRINT_S                            ; Repeat for next character
+
+    RETURN_STRING:             
+                               PUSH DI
+                               RET
+PRINT_STRING ENDP
+
+
 DRAW_WELCOME_SCREEN PROC
 
-    ; PRINT WELCOME
-
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;SET CURSOR POSITION AND PRINT WELCOME
                                MOV  AH, 02H                            ;SET CURSOR POSITION
                                MOV  BH, 00                             ;PAGE NUMBER
                                MOV  DH, 04                             ;ROW
                                MOV  DL, 05                             ;COLUMN
                                INT  10H                                ;EXECUTE
-
-
                                LEA  SI, WELCOME                        ; Load string address into SI
-
-    PRINT_WELCOME:             MOV  AH, 09H
-                               MOV  BL, 09H
-                               MOV  AL, BYTE PTR [SI]                  ; Load character
-                               CMP  AL, '$'                            ; Check for end of string
-                               JE   PRINT1                             ; If '$', exit loop
-                               MOV  CX, 1                              ; NO OF CHARACTERS
-                               INT  10H                                ; EXECUTE
-                               INC  SI                                 ; Move to next character
-
-                               INC  DL
-                               MOV  BH, 00
-                               MOV  DH, 04
-                               MOV  AH, 02H
-                               INT  10H
-                               JMP  PRINT_WELCOME                      ; Repeat for next character
-
-
-    ;PRINT GO TO CHAT
-
-    PRINT1:                    
-
-
+                               PUSH SI
+                               MOV  AH, 09h
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;DRAW ARROW
                                CALL DRAW_WELCOME_ARROW
-
-
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;SET CURSOR POSITION AND PRINT PLAY
                                MOV  AH, 02H                            ;SET CURSOR POSITION
                                MOV  BH, 00                             ;PAGE NUMBER
                                MOV  DH, 09                             ;ROW
                                MOV  DL, 12H                            ;COLUMN
                                INT  10H                                ;EXECUTE
                                LEA  SI, WELCOME_OPTION_PLAY
-
-    PRINT_PLAY:                MOV  AH, 09H
-                               MOV  BL, 0FH
-                               MOV  AL, BYTE PTR [SI]                  ; Load character
-                               CMP  AL, '$'                            ; Check for end of string
-                               JE   PRINT2                             ; If '$', exit loop
-                               MOV  CX, 1                              ; NO OF CHARACTERS
-                               INT  10H                                ; EXECUTE
-                               INC  SI                                 ; Move to next character
-
-                               INC  DL                                 ;INC CURSOR POSITION
-                               MOV  BH, 00
-                               MOV  DH, 09
-                               MOV  AH, 02H
-                               INT  10H
-                               JMP  PRINT_PLAY                         ; Repeat for next character
-
-
-    PRINT2:                    
-
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;SET CURSOR POSITION AND PRINT CHAT
                                MOV  AH, 02H                            ;SET CURSOR POSITION
                                MOV  BH, 00                             ;PAGE NUMBER
                                MOV  DH, 0CH                            ;ROW
                                MOV  DL, 12H                            ;COLUMN
                                INT  10H                                ;EXECUTE
                                LEA  SI, WELCOME_OPTION_CHAT
-   
-    PRINT_CHAT:                MOV  AH, 09H
-                               MOV  BL, 0FH
-                               MOV  AL, BYTE PTR [SI]                  ; Load character
-                               CMP  AL, '$'                            ; Check for end of string
-                               JE   PRINT4                             ; If '$', exit loop
-                               MOV  CX, 1                              ; NO OF CHARACTERS
-                               INT  10H                                ; EXECUTE
-                               INC  SI                                 ; Move to next character
-
-                               INC  DL                                 ;INC CURSOR POSITION
-                               MOV  BH, 00
-                               MOV  DH, 0CH
-                               MOV  AH, 02H
-                               INT  10H
-                               JMP  PRINT_CHAT                         ; Repeat for next character
-
-
-    PRINT4:                    
-
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;SET CURSOR POSITION AND PRINT EXIT
                                MOV  AH, 02H                            ;SET CURSOR POSITION
                                MOV  BH, 00                             ;PAGE NUMBER
                                MOV  DH, 0FH                            ;ROW
                                MOV  DL, 12H                            ;COLUMN
                                INT  10H                                ;EXECUTE
                                LEA  SI, WELCOME_EXIT
-   
-    PRINT_EXIT:                MOV  AH, 09H
-                               MOV  BL, 0FH
-                               MOV  AL, BYTE PTR [SI]                  ; Load character
-                               CMP  AL, '$'                            ; Check for end of string
-                               JE   DORET                              ; If '$', exit loop
-                               MOV  CX, 1                              ; NO OF CHARACTERS
-                               INT  10H                                ; EXECUTE
-                               INC  SI                                 ; Move to next character
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
 
-                               INC  DL                                 ;INC CURSOR POSITION
-                               MOV  BH, 00
-                               MOV  DH, 0FH
-                               MOV  AH, 02H
-                               INT  10H
-                               JMP  PRINT_EXIT                         ; Repeat for next character
-
-
-
-    DORET:                     
 
                                MOV  AH, 01H
                                INT  16H                                ;CHECK FOR KEY PRESS
@@ -625,19 +625,20 @@ HANDLE_COLLISION PROC
                                CMP  ES:[SI],DL                         ; CHECK IF SI IS COLORED AS SAME AS THE BALL (INSIDE THE BALL)
                                JZ   .RT
                                CMP  ES:[SI], BYTE PTR  0               ; CHECK IF COLIDED WITH DIFFERENT COLOR THAN BLACK OR BALL_COLOR (COLLISION WITH BRICK)
-                               JA   .REVERSE_Y                         ;to check if it is a power then don't reflect
+                               JA   .REVERSE_Y
 
 .RT: RET
 
 .REVERSE_Y:
 
-                               CMP  BALL_POSITION_Y,60d
+                               CMP  BALL_POSITION_Y,60d                ; Check if it is not brick
                                JG   RET_
 
     NOT_COLLIDE_Ball_PowerDown:
     ;;;;;;;;;;;;;;;;
                                NEG  BALL_SPEED_Y                       ;REVERSE THE DIRECTION OF SPEED IN Y
                                CALL DESTROY_BRICK                      ;DESTROY THE BRICK I COLLIDED WITH
+                               CALL SOUND
                                RET
 
     RET_:                      
@@ -730,7 +731,45 @@ DESTROY_BRICK PROC
 DESTROY_BRICK ENDP
 
 
+SOUND PROC
+                               push ax
+                               push bx
+                               push cx
+                               push dx
+                               push bp
+                               push si
+                               push di
 
+                               mov  ax, SOUND_FREQ
+                               MOV  BX, AX                             ;Preserve the note value by storing it in BX.
+                               MOV  AL, 182                            ;Set up the write to the control word register.
+                               OUT  43h, AL                            ;Perform the write.
+                               MOV  AX, BX                             ;Pull back the frequency from BX.
+                               OUT  42h, AL                            ;Send lower byte of the frequency.
+                               MOV  AL, AH                             ;Load higher byte of the frequency.
+                               OUT  42h, AL                            ;Send the higher byte.
+                               IN   AL, 61h                            ;Read the current keyboard controller status.
+                               OR   AL, 03h                            ;Turn on 0 and 1 bit, enabling the PC speaker gate and the data transfer.
+                               OUT  61h, AL                            ;Save the new keyboard controller status.
+                               MOV  AH, 86h                            ;Load the BIOS WAIT, int15h function AH=86h.
+                               MOV  AL, 0
+                               MOV  CX, 1
+                               MOV  DX, 2
+                               INT  15h                                ;Immediately interrupt. The delay is already in CX:DX.
+                               IN   AL, 61h                            ;Read the current keyboard controller status.
+                               AND  AL, 0FCh                           ;Turn off 0 and 1 bit, simply disabling the gate.
+                               OUT  61h, AL                            ;Write the new keyboard controller status.
+
+
+                               pop  di
+                               pop  si
+                               pop  bp
+                               pop  dx
+                               pop  cx
+                               pop  bx
+                               pop  ax
+                               ret
+SOUND ENDP
 
 DRAWING_BALL PROC
 
@@ -1842,7 +1881,7 @@ RESET_GAME PROC
                                MOV  Paddle_Y         ,      196D
                                CALL Draw_Paddle
 
-    ;RESET_CLR_MATRIX
+    ;     ;RESET_CLR_MATRIX
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                MOV  DI,0
     RESET_CLR_MTRX:            
