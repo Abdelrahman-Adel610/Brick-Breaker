@@ -66,8 +66,8 @@
     Pause_X             DW  60
     Pause_Y             DW  50
 
-    TEXT_RESTART        db  'PRESS R FOR RESTART','$'
-    TEXT_RESUME         db  'PRESS S FOR RESUME','$'
+    TEXT_RESTART        db  'PRESS S FOR RESTART','$'
+    TEXT_RESUME         db  'PRESS R FOR RESUME','$'
 
     is_P_pressed        db  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -134,7 +134,8 @@
     TEXT_SCORE          db  'SCORE: $'
     TEXT_LIVES          db  'LIVES: $'
     SCORE               db  0
-    LIVES               db  1
+    LIVES_CONST         EQU 1
+    LIVES               db  LIVES_CONST
     SCORE_CURSOR_X      db  8
     SCORE_MAX_WIDTH     db  3
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -190,12 +191,20 @@
     ;;;;;;;;;;;;;;;;;;;INSTRUCTIONS&INFORMATIONS;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     INST_INFO           DB  'INSTRUCTIONS & INFORMATIONS:$'
-    FIRST_INST          DB  'PRESS SPACE TO PAUSE THE GAME $'
+    FIRST_INST          DB  'PRESS "P" TO PAUSE THE GAME $'
     SECOND_INST         DB  'THE GAME HAS DIFFERENT LEVELS $'
     SECOND_INST2        DB  'OF BALL SPEED $'
 
-    LIVES_CONST   EQU  1
-
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;Chat variables;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    value db ?     ;value which will be sent or received by user
+    yposS db 0     ;y position of sending initial will be 0
+    xposS db 0     ;x position of sending init will be 0
+    xposR db 0     ;x position of receiving initial will be 0
+    yposR db 0Dh   ;y position of receiving initial wil be D because of lower part of screen
+    LowerScreen db 0, 13, 79, 24 ;this is the lower part of the screen
+    UpperScreen db 0, 0, 79, 12 ;this is the upper part of the screen
 .CODE
 
 START_COO PROC
@@ -232,12 +241,12 @@ MAIN PROC FAR
                                MOV  AX, @DATA
                                MOV  DS, AX                             ;MOVING DATA TO DATA SEGNMENT
 
-                               mov  ax, 0A000h                         ; Video memory segment for mode 13h
+                              mov  ax, 0A000h                         ; Video memory segment for mode 13h
                                mov  es, ax                             ; Set ES to point to video memory
-                               MOV  AH, 00H
+                MAIN_MENU:               MOV  AH, 00H
                                MOV  AL, 13H                            ;CHOOSE THE VIDEO MODE
                                INT  10H
-
+                               CALL initializingUART
                                CALL CLEARING_SCREEN
                                CALL DRAW_WELCOME_SCREEN
 
@@ -248,7 +257,8 @@ MAIN PROC FAR
                                MOV  AL, 1
                                CMP  SELECTOR, AL
                                JE   GAME
-
+                                call SendReceive
+                               JMP  MAIN_MENU
     EXIT:                      MOV  AH, 4CH
                                INT  21H
 
@@ -367,8 +377,7 @@ MAIN PROC FAR
                                MOV  SCORE, 0
                                MOV  LOSE_OR_WIN, 2
                                CALL CLEARING_SCREEN                    ;TO CLEAR THE SCREEN
-                            
-                                      ;RESET_CLR_MATRIX
+                                                                 ;RESET_CLR_MATRIX
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                MOV  DI,0
                                mov  ROW      ,       FIRST_ROW_POS
@@ -384,10 +393,9 @@ MAIN PROC FAR
                                CALL DRAW_ALL_BRICKS
                                CALL DRAW_WHITE_LINE
                                CALL RESET_GAME
-                               JMP  TIME_AGAIN_
+                               JMP  TIME_AGAIN
 
     RETURNGAME:                
-                          
                                MOV  AH, 4CH
                                INT  21H
                                RET
@@ -1402,8 +1410,9 @@ Halv_Paddle_Velocity endp
 Duplicate_Paddle_Size PROC
                                PUSH AX
                                PUSH CX
+                               PUSH BX
 
-
+                               MOV  BX, Paddle_X
                                MOV  AX,Paddle_X
                                MOV  CX ,width_Paddle
                                SHR  CX,1
@@ -1418,18 +1427,21 @@ Duplicate_Paddle_Size PROC
                                JG   Reset_MaxSize
                                JMP  RET___
     Reset_MaxSize:             
+                               MOV  Paddle_X,BX
                                MOV  AX, Max_size
                                mov  width_Paddle,AX
 
-    RET___:                    POP  CX
+    RET___:                    POP  BX
+                               POP  CX
                                POP  AX
                                RET
 Duplicate_Paddle_Size endp
 Duplicate_Paddle_Size2 PROC
                                PUSH AX
                                PUSH CX
+                               PUSH BX
 
-
+                               MOV  BX, Paddle_X2
                                MOV  AX,Paddle_X2
                                MOV  CX ,width_Paddle2
                                SHR  CX,1
@@ -1443,11 +1455,13 @@ Duplicate_Paddle_Size2 PROC
                                CMP  AX, Max_size
                                JG   Reset_MaxSize2
                                JMP  RET___2
-    Reset_MaxSize2:            
+
+    Reset_MaxSize2:            MOV  Paddle_X2,BX
                                MOV  AX, Max_size
                                mov  width_Paddle2,AX
 
-    RET___2:                   POP  CX
+    RET___2:                   POP  BX
+                               POP  CX
                                POP  AX
                                RET
 Duplicate_Paddle_Size2 endp
@@ -1455,6 +1469,9 @@ Duplicate_Paddle_Size2 endp
 Halv_Paddle_Size PROC
                                PUSH AX
                                PUSH CX
+                               PUSH BX
+                               
+                               MOV  BX, Paddle_X
                                MOV  AX,Paddle_X
                                MOV  CX ,width_Paddle
                                SHR  CX,1
@@ -1470,16 +1487,23 @@ Halv_Paddle_Size PROC
                                JB   Reset_MinSize
                                JMP  RETT_
     Reset_MinSize:             
+                               MOV  Paddle_X,BX
                                MOV  AX, Min_size
                                mov  width_Paddle,AX
 
-    RETT_:                     POP  CX
+    RETT_:                     
+                               POP  BX
+                               POP  CX
                                POP  AX
                                RET
 Halv_Paddle_Size endp
+
 Halv_Paddle_Size2 PROC
                                PUSH AX
                                PUSH CX
+                               PUSH BX
+                               
+                               MOV  BX, Paddle_X2
                                MOV  AX,Paddle_X2
                                MOV  CX ,width_Paddle2
                                SHR  CX,1
@@ -1495,10 +1519,13 @@ Halv_Paddle_Size2 PROC
                                JB   Reset_MinSize2
                                JMP  RETT_2
     Reset_MinSize2:            
+                               MOV  Paddle_X2,BX
                                MOV  AX, Min_size
                                mov  width_Paddle2,AX
 
-    RETT_2:                    POP  CX
+    RETT_2:                    
+                               POP  BX
+                               POP  CX
                                POP  AX
                                RET
 Halv_Paddle_Size2 endp
@@ -2495,7 +2522,7 @@ Move_Paddle2 endp
 Lose_Life PROC
                                CMP  LIVES,1
                                JNE  DEC_LIVES
-                                DEC LIVES
+                               DEC LIVES
                               CALL CLEARING_SCREEN
                                MOV  LOSE_OR_WIN, 0
                                CALL DRAW_FINAL_SCREEN
@@ -2506,6 +2533,7 @@ Lose_Life PROC
                                CMP  LIVES, 0
                                JNE  REEETT
 
+                            
 
     REEETT:                    
                                RET
@@ -2569,12 +2597,11 @@ RESET_GAME PROC
     ;   CALL DRAW_ALL_BRICKS
                                CALL DISPLAY_STATS
     ;   CALL DRAW_WHITE_LINE
-                            ;    cmp lives,0
-                            ;    jz endit
+                            
                                CALL START_COO
                                MOV  READY1,0
                                MOV  READY2,0
-                    endit:           RET
+                               RET
 RESET_GAME ENDP
 
 DRAW_BORDER_LEVELS PROC
@@ -2943,5 +2970,248 @@ DRAW_FINAL_SCREEN PROC
                                RET
 DRAW_FINAL_SCREEN ENDP
 
+initializingUART proc
+  ; set divisor latch access bit
 
+  mov dx,3fbh             ; Line Control Register
+  mov al,10000000b        ;Set Divisor Latch Access Bit
+  out dx,al
+
+  ;Set LSB byte of the Baud Rate Divisor Latch register.
+
+  mov dx,3f8h
+  mov al,0ch
+  out dx,al
+
+  ;Set MSB byte of the Baud Rate Divisor Latch register.
+
+  mov dx,3f9h
+  mov al,00h
+  out dx,al
+
+  ;Set port configuration
+  mov dx,3fbh
+  mov al,00011011b
+  out dx,al
+
+  ;splitting screen to two half
+
+
+
+ret
+initializingUART ENDP
+
+
+scrollUpper MACRO
+
+    mov ah,6       ; function 6
+    mov al,1       ; scroll up one line
+    mov bh,21h     ; normal video attribute
+    mov ch,UpperScreen[1]       ; upper left Y
+    mov cl,UpperScreen[0]       ; upper left X
+    mov dh,UpperScreen[3]      ; lower right Y
+    mov dl,UpperScreen[2]      ; lower right X 
+    int 10h 
+
+ENDM scrollUpper 
+;-----------------------------------------------------------------------------------------------
+;This is a macro to clear the lower half of the screen when it's completely full of characters
+
+scrollLower MACRO
+
+    mov ah,6        ; function 6
+    mov al,1        ; scroll up one line 
+    mov bh,12h      ; normal video attribute
+    mov ch,LowerScreen[1]       ; upper left Y
+    mov cl,LowerScreen[0]        ; upper left X
+    mov dh,LowerScreen[3]       ; lower right Y
+    mov dl,LowerScreen[2]       ; lower right X 
+    int 10h
+
+ENDM scrollLower
+;--------------------------------------------------------------------------------------------------
+;this is a macro to get the cursor position of the send mode in dx "we need to save the cursor position every time we go to receive mode or send mode"
+saveCursorS MACRO
+mov ah,3h
+mov bh,0h
+int 10h
+mov xposS,dl
+mov yposS,dh
+ENDM saveCursorS
+;---------------------------------------------------------------------------------------------------
+;this is a macro to get the cursor position of the receive mode in dx "we need to save the cursor position every time we go to receive mode or send mode"
+saveCursorR MACRO
+mov ah,3h
+mov bh,0h
+int 10h
+mov xposR,dl
+mov yposR,dh
+ENDM saveCursorR 
+;----------------------------------------------------------------------------------------------------
+;this is a macro to set the cursor in the right position
+setCursor MACRO x,y
+mov ah,2
+mov bh,0
+mov dl,x
+mov dh,y
+int 10h
+ENDM setCursor
+
+SendReceive proc
+mov ah, 0      ;open text mode
+    mov al, 3
+    int 10h
+
+    mov ah,6       ; function 6
+    mov al,0       ; clear screen
+    mov bh,21h     ; normal video attribute
+    mov ch,UpperScreen[1]       ; upper left Y
+    mov cl,UpperScreen[0]       ; upper left X
+    mov dh,UpperScreen[3]      ; lower right Y
+    mov dl,UpperScreen[2]      ; lower right X 
+    int 10h
+
+
+    mov ah,6        ; function 6
+    mov al,0        ; clear screen
+    mov bh,12h      ; normal video attribute
+    mov ch,LowerScreen[1]       ; upper left Y
+    mov cl,LowerScreen[0]        ; upper left X
+    mov dh,LowerScreen[3]       ; lower right Y
+    mov dl,LowerScreen[2]       ; lower right X 
+    int 10h
+ChatLoop:
+
+mov ah,1    ;check if a key is pressed
+int 16h
+jz dummyReceive   ; if not then jmp to receiving mode
+jnz send    ;if yes jmp to send mode
+
+
+
+send:
+
+mov ah,0   ;clear the keyboard buffer
+int 16h 
+
+mov value,al  ; save the key ascii code in al
+CMP al,0Dh    ; check if the key is enter
+jnz continue_chat
+jz newline
+
+dummyReceive: jmp receive
+
+newline:
+CMP yposS,12   ;check first about if y position in 12 then the enter must do scroll up 
+jz  LastLineUpper
+jnz NotLastUpper
+LastLineUpper:scrollUpper
+mov xposS,0             ;set the cursor manually to 0,12
+mov yposS,12
+setCursor xposS,yposS
+jmp print
+ 
+NotLastUpper:inc yposS     ;if enter go to the next line so we need to change the position of x,y manually then call the macro of setting cursor
+mov xposS,0
+
+continue_chat:
+setCursor xposS,yposS  ; setting the cursor
+CMP xposS,79           ; if the x goes to 79 the most right of screen check where is y
+JZ checkY
+jnz print
+
+checkY:CMP yposS,12    ;if y goes to the lower bound of the first half of the screen go to clear the upper half of screen
+JNZ print
+scrollUpper
+mov xposS,0             ;set the cursor manually to 0,12
+mov yposS,12
+setCursor xposS,yposS
+
+jmp print               ; if none of the above happened then go to print the char on the user screen
+ 
+
+
+print:mov ah,2          ; printing the char
+mov dl,value
+int 21h
+  
+mov dx,3FDH 		; Line Status Register
+In al , dx 	;Read Line Status
+test al , 00100000b
+jz receive                    ;Not empty
+mov dx , 3F8H		; Transmit data register
+mov al,value        ; put the data into al
+out dx , al         ; sending the data
+CMP al,27           ; if the key was esc terminate the programme and this check must be after the send is done
+JZ dummyExit
+saveCursorS         ; we need to save the cursor here 
+jmp ChatLoop        ; loop again
+
+dummyExit: RET
+
+dummySend: jmp send
+
+receive:
+mov ah,1            ;check if there is key pressed then go to the sending mode
+int 16h
+jnz dummySend
+
+
+
+mov dx , 3FDH		; Line Status Register
+in al , dx 
+test al , 1
+JZ receive           
+
+
+mov dx , 03F8H
+in al , dx 
+mov value,al              ;check if the received data is sec key then terminate the programme 
+CMP value,27
+JZ  dummyExit
+
+CMP value,0Dh             ;check if the key is enter
+JNZ contR
+JZ newlineR
+
+
+
+newlineR:
+cmp yposR,24
+JZ XR
+jnz YR
+XR:
+scrollLower
+mov xposR,0
+mov yposR,24
+setCursor xposR,yposR
+jmp printR
+
+YR:
+inc yposR
+mov xposR,0
+
+contR:
+setCursor xposR,yposR
+CMP xposR,79
+JZ checkYR
+jnz printR
+
+checkYR: cmp yposR,24
+jnz printR
+scrollLower
+mov xposR,0
+mov yposR,24
+setCursor xposR,yposR
+
+printR:mov ah,2
+mov dl,value
+int 21h
+
+saveCursorR
+
+jmp ChatLoop
+
+ret           
+SendReceive endp
 end main
