@@ -2,57 +2,57 @@
 .STACK 4000
 .DATA
 
-    MAX_WIDTH                 DW  140H                                    ;THE WIDTH OF THE WINDOW
-    MAX_HIGHT                 DW  0C8H                                    ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
+    MAX_WIDTH           DW  140H                                    ;THE WIDTH OF THE WINDOW
+    MAX_HIGHT           DW  0C8H                                    ;THE HIGHT OF THE WINDOW          ; WILL REPLACE IT WITH THE BADLE POSITION
 
-    BALL_POSITION_X           DW  0A0H                                    ;X POSITION OF THE BALL COLUMNNN
-    BALL_POSITION_Y           DW  64H                                     ;Y POSITION OF THE BALL ROWWWWWW
-    BALL_SIZE                 EQU 05H                                     ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
+    BALL_POSITION_X     DW  0A0H                                    ;X POSITION OF THE BALL COLUMNNN
+    BALL_POSITION_Y     DW  64H                                     ;Y POSITION OF THE BALL ROWWWWWW
+    BALL_SIZE           EQU 05H                                     ;NUMBER OF PIXELS OF THE BALL IN 2D DIRECTION
 
-    PREV_TIME                 DB  0                                       ;USED TO CHECK IF THE TIME HAS CHANGED
-    BALL_SPEED                DB  7H                                      ;TO CONTROLL THE SPEED OF THE BALL
+    PREV_TIME           DB  0                                       ;USED TO CHECK IF THE TIME HAS CHANGED
+    BALL_SPEED          DB  7H                                      ;TO CONTROLL THE SPEED OF THE BALL
 
-    BALL_SPEED_Y              DW  3H                                      ;THE SPEED OF THE BALL IN Y DIRECTION
-    BALL_SPEED_X              DW  1H
+    BALL_SPEED_Y        DW  3H                                      ;THE SPEED OF THE BALL IN Y DIRECTION
+    BALL_SPEED_X        DW  1H
 
-    BALL_COLOR                DB  0FH                                     ;RED COLOR  CHANGED TO WHITE TO HANDLE THE COLLISIONS
+    BALL_COLOR          DB  0FH                                     ;RED COLOR  CHANGED TO WHITE TO HANDLE THE COLLISIONS
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Paddle var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle              DW  50d
-    height_Paddle             DW  4d
+    width_Paddle        DW  50d
+    height_Paddle       DW  4d
 
-    Paddle_Color              DB  0FH
-    Paddle_Speed              DW  6
+    Paddle_Color        DB  0FH
+    Paddle_Speed        DW  6
 
-    Paddle_X                  DW  135D
-    Paddle_Y                  DW  196D
+    Paddle_X            DW  135D
+    Paddle_Y            DW  196D
 
-    LeftBoundry               DW  314D
-    RightBoundry              DW  6D
+    LeftBoundry         DW  314D
+    RightBoundry        DW  6D
 
-    Max_size                  DW  100
-    Min_size                  DW  25
+    Max_size            DW  100
+    Min_size            DW  25
 
-    Amount                    DW  20
+    Amount              DW  20
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;multiplayer vars
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    sendChar                  dw  ?
-    recChar                   dw  ?
+    sendChar            dw  ?
+    recChar             dw  ?
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Paddle2 var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    width_Paddle2             DW  50d
-    height_Paddle2            DW  4d
+    width_Paddle2       DW  50d
+    height_Paddle2      DW  4d
 
-    Paddle_Color2             DB  0FH
-    Paddle_Speed2             DW  6
+    Paddle_Color2       DB  0FH
+    Paddle_Speed2       DW  6
 
-    Paddle_X2                 DW  135D
-    Paddle_Y2                 DW  196D
+    Paddle_X2           DW  135D
+    Paddle_Y2           DW  196D
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -60,116 +60,141 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Pause var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    Pause_height              DW  120d
-    Pause_width               DW  100d
+    Pause_height        DW  120d
+    Pause_width         DW  100d
 
-    Pause_X                   DW  60
-    Pause_Y                   DW  50
+    Pause_X             DW  60
+    Pause_Y             DW  50
 
-    TEXT_RESTART              db  'PRESS R FOR RESTART','$'
-    TEXT_RESUME               db  'PRESS S FOR RESUME','$'
+    TEXT_RESTART        db  'PRESS R FOR RESTART','$'
+    TEXT_RESUME         db  'PRESS S FOR RESUME','$'
 
-    is_P_pressed              db  0
+    is_P_pressed        db  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerUp var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    PowerUpWidth              DW  10d
-    PowerUpHeight             DW  10d
+    PowerUpWidth        DW  10d
+    PowerUpHeight       DW  10d
 
-    PowerUP_Speed             DW  1
+    PowerUP_Speed       DW  1
 
-    PowerUp_X                 DW  135D
-    PowerUp_Y                 DW  155D
+    PowerUp_X           DW  135D
+    PowerUp_Y           DW  155D
 
-    IsPowerUp                 DW  0
-    IsPowerUp_pre             DW  0
-    Points                    DB  0
+    IsPowerUp           DW  0
+    IsPowerUp_pre       DW  0
+    Points              DB  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerDown var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    PowerDownWidth            DW  10d
-    PowerDownHeight           DW  10d
+    PowerDownWidth      DW  10d
+    PowerDownHeight     DW  10d
 
  
-    PowerDown_Speed           DW  1
+    PowerDown_Speed     DW  1
 
-    PowerDown_X               DW  135D
-    PowerDown_Y               DW  155D
-    IsPowerDown               DW  0
-    IsPowerDown_pre           DW  0
+    PowerDown_X         DW  135D
+    PowerDown_Y         DW  155D
+    IsPowerDown         DW  0
+    IsPowerDown_pre     DW  0
 
-    POWERUP_CLR               EQU 9
-    POWERDOWN_CLR             EQU 4
-    SAVEBRICKSPOS_X           DW  0
-    SAVEBRICKSPOS_Y           DW  0
+    POWERUP_CLR         EQU 9
+    POWERDOWN_CLR       EQU 4
+    SAVEBRICKSPOS_X     DW  0
+    SAVEBRICKSPOS_Y     DW  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Breaks var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     ;size for each brick
-    BRICK_WIDTH               EQU 35
-    BRICK_HEIGHT              EQU 8
+    BRICK_WIDTH         EQU 35
+    BRICK_HEIGHT        EQU 8
 
     ;STARTING POINT TO DRAW BREAKS
-    FIRST_ROW_POS             EQU 14
-    FIRST_COL_POS             EQU 1
+    FIRST_ROW_POS       EQU 14
+    FIRST_COL_POS       EQU 1
 
-    BRICKS_PER_ROW            EQU 8                                       ; NUMBER OF BRICKS IN EACH ROW
-    TOTAL_ROWS                EQU 4                                       ; NUMBER OF ROWS
+    BRICKS_PER_ROW      EQU 8                                       ; NUMBER OF BRICKS IN EACH ROW
+    TOTAL_ROWS          EQU 4                                       ; NUMBER OF ROWS
 
-    STEP_PER_ROW              EQU 40                                      ;(BRICK_WIDTH+1PX SPACE)
-    STEP_PER_COL              EQU 12                                      ;(BRICK_WIDTH+1PX SPACE)
+    STEP_PER_ROW        EQU 40                                      ;(BRICK_WIDTH+1PX SPACE)
+    STEP_PER_COL        EQU 12                                      ;(BRICK_WIDTH+1PX SPACE)
 
-    COLOR_MATRIX              db  11 dup (4,9,9,9)                        ; EACH Brick must have certain color here
+    COLOR_MATRIX        db  11 dup (4,9,9,9)                        ; EACH Brick must have certain color here
     
-    GNCLR_MATRIX              db  11 dup (4,9,9,9)
+    GNCLR_MATRIX        db  11 dup (4,9,9,9)
 
     ;VARIABLES USED TO DRAW ALL BRICKS (NOT CONFIGURATIONS)
-    ROW                       dw  FIRST_ROW_POS
-    COL                       dw  FIRST_COL_POS
-    CRNT_BRICK                dW  0                                       ;counter used to draw each brick with its coressponding color
+    ROW                 dw  FIRST_ROW_POS
+    COL                 dw  FIRST_COL_POS
+    CRNT_BRICK          dW  0                                       ;counter used to draw each brick with its coressponding color
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;Stats var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    TEXT_GAME_OVER_PLAY_AGAIN db  'GAME OVER! PLAY AGAIN? (Y/N)','$'
-    TEXT_SCORE                db  'SCORE: $'
-    TEXT_LIVES                db  'LIVES: $'
-    SCORE                     db  0
-    LIVES                     db  8
-    SCORE_CURSOR_X            db  8
-    SCORE_MAX_WIDTH           db  3
+    TEXT_SCORE          db  'SCORE: $'
+    TEXT_LIVES          db  'LIVES: $'
+    SCORE               db  0
+    LIVES               db  1
+    SCORE_CURSOR_X      db  8
+    SCORE_MAX_WIDTH     db  3
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;WELCOME PAGE VARIABLES
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    WELCOME                   DB  'WELCOME TO BRICK BREAKER GAME', '$'
-    WELCOME_OPTION_CHAT       DB  'CHAT','$'
-    WELCOME_OPTION_PLAY       DB  'PLAY','$'
-    WELCOME_ARROW             DB  '>','$'
-    WELCOME_EXIT              DB  'EXIT','$'
-    SELECTOR                  DB  1
-    ARROW_COLOR               DB  09H
-    ARROW_ROW                 DB  09H
+    WELCOME             DB  'WELCOME TO BRICK BREAKER GAME', '$'
+    WELCOME_OPTION_CHAT DB  'CHAT','$'
+    WELCOME_OPTION_PLAY DB  'PLAY','$'
+    WELCOME_ARROW       DB  '>','$'
+    WELCOME_EXIT        DB  'EXIT','$'
+    SELECTOR            DB  1
+    ARROW_COLOR         DB  09H
+    ARROW_ROW           DB  09H
+    ARROW_COLUMN        DB  10H
 
-    STRING_COLOR              DB  00H
-    ROW_CURSOR                DB  04H
-    COLOUM_CURSOR             DB  00H
+
+    STRING_COLOR        DB  00H
+    ROW_CURSOR          DB  04H
+    COLOUM_CURSOR       DB  00H
 
     ;;;;;;;;;;;;;;;;;;;;;
-    SOUND_FREQ                DW  1193
+    SOUND_FREQ          DW  1193
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    LEVEL1                    DB  ' LEVEL 1', '$'
-    LEVEL2                    DB  ' LEVEL 2', '$'
-    LEVEL3                    DB  ' LEVEL 3', '$'
-    HIGH_POSITION_Y           DW  186
-    LOW_POSITION_X            DW  11
-    HIGH_POSITION_X           DW  86
-    LOW_POSITION_Y            DW  172
-    BORDER_COLOR              DB  12
+    LEVEL1              DB  ' LEVEL 1', '$'
+    LEVEL2              DB  ' LEVEL 2', '$'
+    LEVEL3              DB  ' LEVEL 3', '$'
+    HIGH_POSITION_Y     DW  186
+    LOW_POSITION_X      DW  11
+    HIGH_POSITION_X     DW  86
+    LOW_POSITION_Y      DW  172
+    BORDER_COLOR        DB  12
         
-    READY1                    DB  0
-    READY2                    DB  0
+    READY1              DB  0
+    READY2              DB  0
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;END GAME;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    CONGRATULATIONS     DB  'CONGRATULATIONS ', '$'
+    HARD_LUCK           DB  'HARD LUCK ', '$'
+    SAD_FACE            DB  ':($'
+    PLAY_AGAIN          DB  'PLAY AGAIN ?', '$'
+    Y_CHAR              DB  'Y $'
+    N_CHAR              DB  ' N$'
+    O_BRACKET           DB  '($'
+    C_BRACKET           DB  ')$'
+    SLASH_CHAR          DB  '/$'
+    LOSE_OR_WIN         DB  2
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;INSTRUCTIONS&INFORMATIONS;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    INST_INFO           DB  'INSTRUCTIONS & INFORMATIONS:$'
+    FIRST_INST          DB  'PRESS SPACE TO PAUSE THE GAME $'
+    SECOND_INST         DB  'THE GAME HAS DIFFERENT LEVELS $'
+    SECOND_INST2        DB  'OF BALL SPEED $'
+
+    LIVES_CONST   EQU  1
 
 .CODE
 
@@ -229,7 +254,14 @@ MAIN PROC FAR
 
 
     GAME:                      CALL CLEARING_SCREEN                    ;TO CLEAR THE SCREEN
+
+                               CALL DRAW_INSTRUCTIONS
+    GET_KEY:                   
+                               MOV  AH, 00
+                               INT  16H                                ; GET KEY PRESSED
+                               JNZ  GET_KEY
     ;    CALL START_COO
+                               CALL CLEARING_SCREEN
                                CALL DRAW_ALL_BRICKS
                                CALL DRAW_WHITE_LINE
                                CALL RESET_GAME
@@ -301,8 +333,12 @@ MAIN PROC FAR
 
 
                                CALL MOVING_BALL
+                               CMP  LOSE_OR_WIN, 0
+                               JE   PRESS_SCREEN
                                CALL DRAWING_BALL                       ;DRAWING BALL
                                CALL HANDLE_COLLISION                   ;HANDLE COLLISIONS WITH BRICK
+                               CMP  LOSE_OR_WIN, 1
+                               JE   PRESS_SCREEN
 
 
 
@@ -321,6 +357,39 @@ MAIN PROC FAR
                                CALL Clear_Pause
                                mov  is_P_pressed,0
                                JMP  TIME_AGAIN_
+
+    PRESS_SCREEN:              
+                               MOV  AH, 00
+                               INT  16H                                ; GET KEY PRESSED
+                               CMP  AL, 89                             ; PRESS Y
+                               JNE  RETURNGAME
+                               MOV  LIVES, LIVES_CONST
+                               MOV  SCORE, 0
+                               MOV  LOSE_OR_WIN, 2
+                               CALL CLEARING_SCREEN                    ;TO CLEAR THE SCREEN
+                            
+                                      ;RESET_CLR_MATRIX
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                               MOV  DI,0
+                               mov  ROW      ,       FIRST_ROW_POS
+                               mov  COL        ,     FIRST_COL_POS
+                               mov  CRNT_BRICK ,     0
+    RESET_CLR_MTRX:
+                               MOV  AL,[GNCLR_MATRIX+DI]
+                               MOV  [COLOR_MATRIX+DI],AL
+                               INC  DI
+                               CMP  DI,33
+                               JNZ  RESET_CLR_MTRX
+    ;     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                               CALL DRAW_ALL_BRICKS
+                               CALL DRAW_WHITE_LINE
+                               CALL RESET_GAME
+                               JMP  TIME_AGAIN_
+
+    RETURNGAME:                
+                          
+                               MOV  AH, 4CH
+                               INT  21H
                                RET
 
 MAIN ENDP
@@ -346,7 +415,7 @@ DRAW_WELCOME_ARROW PROC
                                MOV  AH, 02H                            ;SET CURSOR POSITION
                                MOV  BH, 00                             ;PAGE NUMBER
                                MOV  DH, ARROW_ROW                      ;ROW
-                               MOV  DL, 10H                            ;COLUMN
+                               MOV  DL, ARROW_COLUMN                   ;COLUMN
                                INT  10H                                ;EXECUTE
 
                                MOV  AH, 09H
@@ -359,6 +428,73 @@ DRAW_WELCOME_ARROW PROC
 
                                RET
 DRAW_WELCOME_ARROW ENDP
+
+
+DRAW_INSTRUCTIONS PROC
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 02                             ;ROW
+                               MOV  DL, 02H                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, INST_INFO                      ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 12
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+                               MOV  ARROW_ROW, 06H
+                               MOV  ARROW_COLUMN, 02h
+                               MOV  ARROW_COLOR, 12
+                               CALL DRAW_WELCOME_ARROW
+
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 06                             ;ROW
+                               MOV  DL, 04H                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, FIRST_INST                     ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+                               MOV  ARROW_ROW, 0AH
+                               MOV  ARROW_COLUMN, 02h
+                               MOV  ARROW_COLOR, 12
+                               CALL DRAW_WELCOME_ARROW
+
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 0AH                            ;ROW
+                               MOV  DL, 04H                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, SECOND_INST                    ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 0CH                            ;ROW
+                               MOV  DL, 04H                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, SECOND_INST2                   ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+                               RET
+DRAW_INSTRUCTIONS ENDP
 
 
 MOVE_WELCOME_ARROW PROC
@@ -402,12 +538,16 @@ MOVE_WELCOME_ARROW PROC
                                MOV  ARROW_COLOR, AL
                                MOV  AL, 0CH
                                MOV  ARROW_ROW, AL                      ; THE SECOND ROW
+                               MOV  AL, 10H
+                               MOV  ARROW_COLUMN, AL
                                CALL DRAW_WELCOME_ARROW
 
                                MOV  AL, 09                             ; COLOR BLUE TO THE ARROW IN FIRST ROW
                                MOV  ARROW_COLOR, AL
                                MOV  AL, 09H
                                MOV  ARROW_ROW, AL                      ; THE FIRST ROW
+                               MOV  AL, 10H
+                               MOV  ARROW_COLUMN, AL
                                CALL DRAW_WELCOME_ARROW
                                JMP  MOVE
 
@@ -417,12 +557,16 @@ MOVE_WELCOME_ARROW PROC
                                MOV  ARROW_COLOR, AL
                                MOV  AL, 0FH
                                MOV  ARROW_ROW, AL                      ; THE SECOND ROW
+                               MOV  AL, 10H
+                               MOV  ARROW_COLUMN, AL
                                CALL DRAW_WELCOME_ARROW
 
                                MOV  AL, 09                             ; COLOR BLUE TO THE ARROW IN FIRST ROW
                                MOV  ARROW_COLOR, AL
                                MOV  AL, 0CH
                                MOV  ARROW_ROW, AL                      ; THE FIRST ROW
+                               MOV  AL, 10H
+                               MOV  ARROW_COLUMN, AL
                                CALL DRAW_WELCOME_ARROW
                                JMP  MOVE
 
@@ -453,12 +597,16 @@ MOVE_WELCOME_ARROW PROC
                                MOV  ARROW_ROW, AL                      ; THE FIRST ROW
                                MOV  AL, 00H
                                MOV  ARROW_COLOR, AL                    ; THE BLACK COLOR
+                               MOV  AL, 10H
+                               MOV  ARROW_COLUMN, AL
                                CALL DRAW_WELCOME_ARROW                 ; CLEAR FIRST ROW
 
                                MOV  AL, 0CH
                                MOV  ARROW_ROW, AL                      ; THE SECOND ROW
                                MOV  AL, 09H
                                MOV  ARROW_COLOR, AL                    ; THE BLUE COLOR
+                               MOV  AL, 10H
+                               MOV  ARROW_COLUMN, AL
                                CALL DRAW_WELCOME_ARROW                 ; MOVE TO SECOND ROW
                                JMP  MOVE
 
@@ -467,12 +615,16 @@ MOVE_WELCOME_ARROW PROC
                                MOV  ARROW_ROW, AL                      ; THE SECOND ROW
                                MOV  AL, 00H
                                MOV  ARROW_COLOR, AL                    ; THE BLACK COLOR
+                               MOV  AL, 10H
+                               MOV  ARROW_COLUMN, AL
                                CALL DRAW_WELCOME_ARROW                 ; CLEAR SECOND ROW
 
                                MOV  AL, 0FH
                                MOV  ARROW_ROW, AL                      ; THE THERID ROW
                                MOV  AL, 09H
                                MOV  ARROW_COLOR, AL                    ; THE BLUE COLOR
+                               MOV  AL, 10H
+                               MOV  ARROW_COLUMN, AL
                                CALL DRAW_WELCOME_ARROW                 ; MOVE TO THIRD ROW
                                JMP  MOVE
 
@@ -637,7 +789,7 @@ MOVING_BALL PROC
     ;    ADD  AX,BALL_SPEED_X
                                CMP  BALL_POSITION_X,AX                 ;; Check x -->End
                                JG   NOT_COLLIDE
-                            ;    JMP  checkPaddleY2
+    ;    JMP  checkPaddleY2
 
 
     checkPaddleY:              
@@ -649,7 +801,7 @@ MOVING_BALL PROC
                                JGE  REVERSE_Y
                                JMP  RT
 
-    ; checkPaddleY2:             
+    ; checkPaddleY2:
     ;                            MOV  AX, Paddle_Y2
     ;                            SUB  AX, BALL_SIZE
     ;                            ADD  AX,BALL_SPEED_Y
@@ -825,6 +977,16 @@ DESTROY_BRICK PROC
                                cmp  [COLOR_MATRIX+DI],0
                                JNZ  Continue
                                INC  SCORE
+
+
+                               CMP  SCORE, 32
+                               JNE  Continue
+
+                               CALL CLEARING_SCREEN
+                               MOV  LOSE_OR_WIN, 1
+                               CALL DRAW_FINAL_SCREEN
+
+                               
     Continue:                  POP  DI
                                POP  CX
                                POP  DX
@@ -1332,11 +1494,11 @@ Halv_Paddle_Size2 PROC
                                CMP  AX, Min_size
                                JB   Reset_MinSize2
                                JMP  RETT_2
-    Reset_MinSize2:             
+    Reset_MinSize2:            
                                MOV  AX, Min_size
                                mov  width_Paddle2,AX
 
-    RETT_2:                     POP  CX
+    RETT_2:                    POP  CX
                                POP  AX
                                RET
 Halv_Paddle_Size2 endp
@@ -1361,7 +1523,7 @@ Move_Power_UP PROC
                                ADD  AX,width_Paddle
                                CMP  PowerUp_X,AX
                                JBE  COLLIDE_POWERUP1
-                            ;    JMP  NOT_COLLIDE_POWERUP
+    ;    JMP  NOT_COLLIDE_POWERUP
 
     check_2nd_player:          MOV  AX,Paddle_X2                       ; check for x-axis for the second paddle
                                CMP  PowerUp_X,AX
@@ -1413,10 +1575,10 @@ Move_Power_Down PROC
                                ADD  AX,width_Paddle
                                CMP  PowerDown_X,AX
                                JBE  COLLIDE_POWERDOWN1
-                            ;    JMP  check_2nd_player_down
+    ;    JMP  check_2nd_player_down
 
 
-    check_2nd_player_down:     MOV  AX,Paddle_X2                        ; check for x-axis
+    check_2nd_player_down:     MOV  AX,Paddle_X2                       ; check for x-axis
                                CMP  PowerDown_X,AX
                                JB   NOT_COLLIDE_POWERDOWN
                                ADD  AX,width_Paddle2
@@ -1435,16 +1597,16 @@ Move_Power_Down PROC
                                MOV  IsPowerDown_pre,0
                                POP  AX
                                RET
-    COLLIDE_POWERDOWN1:         
+    COLLIDE_POWERDOWN1:        
                                MOV  IsPowerDown_pre,0
                                CALL clear_Paddle
                                CALL Halv_Paddle_Size                   ;Power up
                                POP  AX
                                RET
-    COLLIDE_POWERDOWN2:         
+    COLLIDE_POWERDOWN2:        
                                MOV  IsPowerDown_pre,0
                                CALL clear_Paddle2
-                               CALL Halv_Paddle_Size2                   ;Power up
+                               CALL Halv_Paddle_Size2                  ;Power up
                                POP  AX
                                RET
 
@@ -2331,12 +2493,21 @@ Move_Paddle2 PROC
                                RET
 Move_Paddle2 endp
 Lose_Life PROC
-                               CMP  LIVES,0
+                               CMP  LIVES,1
                                JNE  DEC_LIVES
+                                DEC LIVES
+                              CALL CLEARING_SCREEN
+                               MOV  LOSE_OR_WIN, 0
+                               CALL DRAW_FINAL_SCREEN
                                RET
     DEC_LIVES:                 
                                DEC  LIVES
                                CALL RESET_GAME
+                               CMP  LIVES, 0
+                               JNE  REEETT
+
+
+    REEETT:                    
                                RET
 Lose_Life ENDP
 
@@ -2390,19 +2561,20 @@ RESET_GAME PROC
     ; ;     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                MOV  IsPowerDown_pre,0
                                MOV  IsPowerUp_pre,0
-							   call Clear_PowerUp
-							    call Clear_PowerDown
+                               call Clear_PowerUp
+                               call Clear_PowerDown
     ;    mov  score,0
 
                                CALL DRAWING_BALL
     ;   CALL DRAW_ALL_BRICKS
                                CALL DISPLAY_STATS
     ;   CALL DRAW_WHITE_LINE
-                            
+                            ;    cmp lives,0
+                            ;    jz endit
                                CALL START_COO
                                MOV  READY1,0
                                MOV  READY2,0
-                               RET
+                    endit:           RET
 RESET_GAME ENDP
 
 DRAW_BORDER_LEVELS PROC
@@ -2623,6 +2795,153 @@ Clear_Pause PROC
 
                                RET
 Clear_Pause ENDP
+
+DRAW_FINAL_SCREEN PROC
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;SET CURSOR POSITION AND PRINT CONGRATULATIONS OR HARD LUCK
+                               CMP  LOSE_OR_WIN, 0                     ;LOSE
+                               JE   LOSE_SCREEN
+
+
+    ;PRINT CONGRATULATIONS
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 04                             ;ROW
+                               MOV  DL, 0BH                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, CONGRATULATIONS                ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0Fh
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+                               MOV  AL, 3
+                               MOV  BH, 00H
+                               MOV  BL, 12
+                               MOV  CX, 1
+                               MOV  AH, 09H
+                               INT  10H
+                               JMP  CONT_PRINT
+
+    LOSE_SCREEN:               
+    ;PRINT HARD LUCK
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 04                             ;ROW
+                               MOV  DL, 0EH                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, HARD_LUCK                      ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0Fh
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+                               LEA  SI, SAD_FACE                       ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 12
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PRINT HEART
+    CONT_PRINT:                
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;SET CURSOR POSITION AND PRINT SCORE
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 09H                            ;ROW
+                               MOV  DL, 05H                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, TEXT_SCORE                     ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0Fh
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+                               MOV  AL, SCORE
+                               MOV  AH, 0
+                               CALL PRINT_NUMBER
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PRINT LIVES
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 09H                            ;ROW
+                               MOV  DL, 1BH                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, TEXT_LIVES                     ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0Fh
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+                               MOV  AL, LIVES
+                               MOV  AH,0
+                               CALL PRINT_NUMBER
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;PRINT PLAY AGAIN
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 10H                            ;ROW
+                               MOV  DL, 0DH                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, PLAY_AGAIN                     ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                               MOV  AH, 02H                            ;SET CURSOR POSITION
+                               MOV  BH, 00                             ;PAGE NUMBER
+                               MOV  DH, 12H                            ;ROW
+                               MOV  DL, 0FH                            ;COLUMN
+                               INT  10H                                ;EXECUTE
+                               LEA  SI, O_BRACKET                      ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+                               LEA  SI, Y_CHAR                         ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 10
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+                               LEA  SI, SLASH_CHAR                     ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+                               LEA  SI, N_CHAR                         ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 12
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+                               LEA  SI, C_BRACKET                      ; Load string address into SI
+                               PUSH SI
+                               MOV  AH, 0FH
+                               MOV  STRING_COLOR, AH
+                               MOV  ROW_CURSOR, DH
+                               MOV  COLOUM_CURSOR, DL
+                               CALL PRINT_STRING
+
+
+
+    RETTT:                     
+                               RET
+DRAW_FINAL_SCREEN ENDP
 
 
 end main
