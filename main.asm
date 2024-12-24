@@ -134,7 +134,7 @@
     TEXT_SCORE           db  'SCORE: $'
     TEXT_LIVES           db  'LIVES: $'
     SCORE                db  0
-    LIVES_CONST          EQU 1
+    LIVES_CONST          EQU 8
     LIVES                db  LIVES_CONST
     SCORE_CURSOR_X       db  8
     SCORE_MAX_WIDTH      db  3
@@ -173,7 +173,7 @@
         
     READY1               DB  0
     READY2               DB  0
-
+    
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;END GAME;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -403,7 +403,8 @@ MAIN PROC FAR
                                cmp         is_P_pressed,0
                                JZ          TIME_AGAIN_
     P_pressed:                 
-    ;TO CLEAR THE SCREEN
+    ;TO CLEAR THE SCREEN       
+                              
                                CALL        Draw_pause
                                JMP         Done__
 
@@ -415,9 +416,11 @@ MAIN PROC FAR
 
                             
     Done__:                                                                   ; Read the key
-                               MOV         AH, 00h
-                               INT         16h
-                               CMP         AH, 13h                            ; check if it is 'r'
+                            ;    MOV         AH, 00h
+                            ;    INT         16h
+                               call Move_Paddle
+                               call Move_Paddle2
+                               CMP         is_P_pressed, 0                            ; check if it is 'r'
                                JZ          TIME_AGAIN__                       ; i want to jmp to 'TIME_AGAIN' label but it is far :(
                                CMP         AH, 1Fh                            ; check if it is 's'
                                JZ          GAME_
@@ -1392,7 +1395,13 @@ Move_Paddle PROC
     ; Check for right arrow (E0 4D)
                                CMP         BYTE PTR sendChar + 1, 4Dh         ; Compare scancode (AL contains scancode without E0 prefix)
                                JE          right_pressed                      ; Jump if Right Arrow
-                   
+
+                               CMP is_P_pressed,0
+                               JE rett
+                               CMP         BYTE PTR sendChar + 1, 13h          ; Compare scancode (AL contains scancode without E0 prefix)
+                               JNE         rett                      ; Jump if Right Arrow
+                               mov is_P_pressed,0 
+
                                JMP         rett
                                
                                
@@ -2605,7 +2614,7 @@ Move_Paddle2 PROC
                                mov         dx , 3FDH                          ; Line Status Register
                                in          al , dx
                                test        al , 1
-                               jz          retPaddle2
+                               jz          retPaddle2__
 
                                mov         dx , 03F8H
                                in          al , dx
@@ -2619,8 +2628,22 @@ Move_Paddle2 PROC
     ; Check for right arrow (E0 4D)
                                CMP         BYTE PTR recChar, 4Dh              ; Compare scancode (AL contains scancode without E0 prefix)
                                JE          right_pressed2                     ; Jump if Right Arrow
-                     
-                               JMP         retPaddle2                         ; Return to polling
+
+
+                               CMP         BYTE PTR recChar, 19h              ; Compare scancode (AL contains scancode without E0 prefix)
+                               mov is_P_pressed,1                            ; Jump if Right Arrow
+
+jmp zz
+retPaddle2__: jmp retPaddle2
+zz:
+
+                               CMP is_P_pressed,0
+                               JE retPaddle2
+                               CMP         BYTE PTR recChar , 13h          ; Compare scancode (AL contains scancode without E0 prefix)
+                               JNE         retPaddle2                      ; Jump if Right Arrow
+                               mov is_P_pressed,0 
+
+                               JMP         retPaddle2
                             
     left_pressed2:             
                      
