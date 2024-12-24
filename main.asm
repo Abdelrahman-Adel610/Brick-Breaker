@@ -70,6 +70,7 @@
     TEXT_RESUME          db  'PRESS R FOR RESUME','$'
 
     is_P_pressed         db  0
+    is_S_pressed         db  0
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;PowerUp var
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -373,6 +374,7 @@ MAIN PROC FAR
     GAME_:                     
                                CALL        Clear_Pause
                                mov         is_P_pressed,0
+                               mov         is_S_pressed,0
                                JMP         GAME
 
     CONNECTION:                
@@ -422,7 +424,7 @@ MAIN PROC FAR
                                call Move_Paddle2
                                CMP         is_P_pressed, 0                            ; check if it is 'r'
                                JZ          TIME_AGAIN__                       ; i want to jmp to 'TIME_AGAIN' label but it is far :(
-                               CMP         AH, 1Fh                            ; check if it is 's'
+                               CMP         is_S_pressed, 1                            ; check if it is 's'
                                JZ          GAME_
                                JMP         P_pressed
 
@@ -1399,9 +1401,12 @@ Move_Paddle PROC
                                CMP is_P_pressed,0
                                JE rett
                                CMP         BYTE PTR sendChar + 1, 13h          ; Compare scancode (AL contains scancode without E0 prefix)
-                               JNE         rett                      ; Jump if Right Arrow
+                               JNE         check_s                      ; Jump if Right Arrow
                                mov is_P_pressed,0 
 
+      check_s:                 CMP         BYTE PTR sendChar + 1, 1Fh           ; Compare scancode (AL contains scancode without E0 prefix)
+                               JNE rett
+                               MOV is_S_pressed,1
                                JMP         rett
                                
                                
@@ -2633,6 +2638,9 @@ Move_Paddle2 PROC
                                CMP         BYTE PTR recChar, 19h              ; Compare scancode (AL contains scancode without E0 prefix)
                                mov is_P_pressed,1                            ; Jump if Right Arrow
 
+
+                               
+
 jmp zz
 retPaddle2__: jmp retPaddle2
 zz:
@@ -2640,9 +2648,12 @@ zz:
                                CMP is_P_pressed,0
                                JE retPaddle2
                                CMP         BYTE PTR recChar , 13h          ; Compare scancode (AL contains scancode without E0 prefix)
-                               JNE         retPaddle2                      ; Jump if Right Arrow
+                               JNE         check_s2                      ; Jump if Right Arrow
                                mov is_P_pressed,0 
 
+    check_s2:                 CMP      BYTE PTR recChar, 1Fh           ; Compare scancode (AL contains scancode without E0 prefix)
+                               JNE retPaddle2
+                               MOV is_S_pressed,1
                                JMP         retPaddle2
                             
     left_pressed2:             
