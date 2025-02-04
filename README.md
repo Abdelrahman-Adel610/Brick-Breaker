@@ -132,3 +132,11 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 - Inspired by the classic Brick Breaker arcade game.
 - Built for educational purposes to demonstrate x86 Assembly programming.
+
+ ## Contributors <img src="https://i.imgur.com/SfBB4jV.png" width="28" />
+
+| <a href="https://avatars.githubusercontent.com/u/149705123?v=4"><img src="https://avatars.githubusercontent.com/u/149705123?v=4" alt="Abdelrahman Adel" width="150"></a> | <a href="https://avatars.githubusercontent.com/u/149713232?v=4"><img src="https://avatars.githubusercontent.com/u/149713232?v=4?v=4" alt="Abdallah Ayman" width="150"></a> | <a href="https://avatars.githubusercontent.com/u/149703255?v=4"><img src="https://avatars.githubusercontent.com/u/149703255?v=4" alt="Esraa Hassan" width="150"></a> | <a href="https://avatars.githubusercontent.com/u/149162265?v=4"><img src="https://avatars.githubusercontent.com/u/149162265?v=4" alt="Hagar Abdelsalam" width="150"></a> |
+| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|                                                             [Abdelrahman Adel](https://github.com/Abdelrahman-Adel610)                                                               |                                                          [Abdallah Ayman](https://github.com/AbdallahAyman03)                                                           |                                                        [Esraa Hassan](https://github.com/Esraa-Hassan0)                                                         |                                                             [Hagar Abdelsalam](https://github.com/hagar3bdelsalam)                                                             |
+
+
